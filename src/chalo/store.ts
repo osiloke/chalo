@@ -99,6 +99,21 @@ export const useChaloStore = create<ChaloStore>()(
         }));
       },
 
+      resetMission: () => {
+        set({
+          activeMissionId: null,
+          currentStepId: null,
+          missionProgress: 0,
+          fieldValues: {},
+          fieldStates: {},
+          interactionHistory: [],
+          isPaused: false,
+          isCompleted: false,
+          error: null,
+          // Preserve: missions, tourHistory
+        });
+      },
+
       reset: () => set(initialState),
 
       setError: (error: string | null) => set({ error }),

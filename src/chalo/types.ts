@@ -93,6 +93,7 @@ export interface ChaloStore extends ChaloState {
   updateField: (name: string, value: unknown, status?: ChaloState['fieldStates'][string]) => void;
   addInteraction: (stepId: string, actionText: string) => void;
   recordTourEntry: (missionId: MissionId, stepId: StepId, completed: boolean) => void;
+  resetMission: () => void;
   reset: () => void;
   setError: (error: string | null) => void;
 }
