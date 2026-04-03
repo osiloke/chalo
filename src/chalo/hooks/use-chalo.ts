@@ -35,11 +35,13 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const recordTourEntry = useChaloStore(s => s.recordTourEntry);
   const tourHistory = useChaloStore(s => s.tourHistory);
 
-  // Wrap startMission to record tour entry
+  // Wrap startMission to reset state and record tour entry
   const startMission = useCallback((missionId: MissionId) => {
+    // Reset fieldValues, fieldStates, and interactionHistory for a clean mission
+    reset();
     recordTourEntry(missionId, '', false);
     startMissionInStore(missionId);
-  }, [startMissionInStore, recordTourEntry]);
+  }, [startMissionInStore, recordTourEntry, reset]);
 
   const fieldErrors = useMemo(() => form?.formState.errors || {}, [form?.formState.errors]);
 
@@ -194,24 +196,52 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   }, [activeMission, currentStepId, goToStep]);
 
   // Polling: check waitFor condition on current step and auto-advance when met
-  const waitForCheckedRef = useRef(false);
+  // Per-step tracking: use a Set so consecutive steps with waitFor don't interfere
+  const waitForCheckedStepsRef = useRef<Set<StepId>>(new Set());
+  // Ref for setTimeout to allow cleanup on unmount/step change
+  const waitForTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref for nextStep to avoid stale closure in setTimeout
+  const nextStepRef = useRef(nextStep);
+  // Keep ref in sync
   useEffect(() => {
+    nextStepRef.current = nextStep;
+  }, [nextStep]);
+
+  useEffect(() => {
+    // Clear any pending timeout from previous step
+    if (waitForTimeoutRef.current) {
+      clearTimeout(waitForTimeoutRef.current);
+      waitForTimeoutRef.current = null;
+    }
+
     if (!currentStep?.waitFor) {
-      waitForCheckedRef.current = false;
+      waitForCheckedStepsRef.current.clear();
       return;
     }
-    if (waitForCheckedRef.current) return;
+
+    // Skip if this specific step was already checked
+    if (waitForCheckedStepsRef.current.has(currentStep.id)) return;
 
     const interval = setInterval(() => {
-      if (evaluateCondition(currentStep.waitFor)) {
-        waitForCheckedRef.current = true;
+      if (evaluateCondition(currentStep.waitFor!)) {
+        waitForCheckedStepsRef.current.add(currentStep.id);
         clearInterval(interval);
-        setTimeout(() => nextStep(), 600);
+        // Use ref to get current nextStep, avoiding stale closure
+        waitForTimeoutRef.current = setTimeout(() => {
+          nextStepRef.current();
+          waitForTimeoutRef.current = null;
+        }, 600);
       }
     }, 300);
 
-    return () => clearInterval(interval);
-  }, [currentStep?.id, currentStep?.waitFor, evaluateCondition, nextStep]);
+    return () => {
+      clearInterval(interval);
+      if (waitForTimeoutRef.current) {
+        clearTimeout(waitForTimeoutRef.current);
+        waitForTimeoutRef.current = null;
+      }
+    };
+  }, [currentStep?.id, currentStep?.waitFor, evaluateCondition]);
 
   // Generic fillField: works with any string key, updates store always,
   // and attempts to update the primary form if the field is registered there.
