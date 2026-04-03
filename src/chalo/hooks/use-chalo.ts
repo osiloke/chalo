@@ -137,6 +137,13 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         form.setFocus(currentStep.targetField as Path<TFieldValues>);
       }, 100);
     }
+
+    // Clear any DOM-based waitFor signals from previous interactions
+    if (currentStep?.waitFor?.type === 'custom' && currentStep.targetElement) {
+      const el = document.querySelector(currentStep.targetElement);
+      if (el) el.removeAttribute('data-clicked');
+    }
+
     if (onStepChange && currentStepId) {
       onStepChange(currentStepId);
     }
@@ -299,10 +306,14 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         }
       }
 
+      // Auto-generate a stable id for DOM targeting by action engine
+      const fieldId = `chalo-${String(name)}`;
+
       if (!form) {
         return {
-          id: name,
+          id: fieldId,
           name,
+          'data-chalo-field': String(name),
           onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             updateFieldInStore(name, e.target.value),
           onFocus: () => updateFieldInStore(name, fieldValues[name], 'focused'),
@@ -312,6 +323,8 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       const registered = form.register(name, rhfOptions);
       return {
         ...registered,
+        id: fieldId,
+        'data-chalo-field': String(name),
         onChange: async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onChange(e);
           updateFieldInStore(name, e.target.value);

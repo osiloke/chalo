@@ -28,10 +28,11 @@ const clickHandler: ActionHandler = async (config: ActionConfig) => {
 };
 
 const scrollHandler: ActionHandler = async (config: ActionConfig) => {
-  const { selector, behavior = 'smooth' } = config as ScrollActionConfig;
-  if (selector) {
-    const el = document.querySelector<HTMLElement>(selector);
-    if (!el) throw new Error(`Element not found: ${selector}`);
+  const { selector, behavior = 'smooth', field } = config as ScrollActionConfig & { field?: string };
+  const targetSelector = field ? `[data-chalo-field="${field}"], #chalo-${field}` : selector;
+  if (targetSelector) {
+    const el = document.querySelector<HTMLElement>(targetSelector);
+    if (!el) throw new Error(`Element not found: ${targetSelector}`);
     el.scrollIntoView({ behavior, block: 'center' });
     // Brief highlight to show the target was found
     el.style.transition = 'outline 0.2s';
@@ -40,7 +41,7 @@ const scrollHandler: ActionHandler = async (config: ActionConfig) => {
     setTimeout(() => {
       el.style.outline = 'none';
     }, 2000);
-    return { scrolled: selector };
+    return { scrolled: targetSelector };
   } else {
     window.scrollTo({ top: document.body.scrollHeight, behavior });
     return { scrolled: 'bottom' };
@@ -51,10 +52,13 @@ const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: Execut
   const { field, value } = config as FillFieldActionConfig;
   // Store the value in execution context variables
   ctx.variables[field] = value;
-  // Also try to fill the actual DOM element
-  const el = document.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${field}"], #${field}, [data-field="${field}"]`);
+  // Try to fill the actual DOM element using chalo field markers
+  const el = document.querySelector<HTMLInputElement | HTMLSelectElement>(
+    `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}`
+  );
   if (el) {
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
+      || Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set;
     nativeInputValueSetter?.call(el, value);
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));

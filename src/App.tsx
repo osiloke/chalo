@@ -231,7 +231,7 @@ const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
   {
     id: 'scroll-to-form',
     type: 'scroll',
-    config: { selector: '#fullName', behavior: 'smooth' },
+    config: { field: 'fullName', behavior: 'smooth' },
     label: 'Scroll to name field',
   },
   {
@@ -523,7 +523,6 @@ export default function App() {
                   <div className={cn("space-y-1.5 group", currentStep?.targetField === 'fullName' && "ring-2 ring-indigo-500 ring-offset-4 ring-offset-slate-50 rounded-lg p-1 animate-pulse")}>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Full Name</label>
                     <input
-                      id="fullName"
                       {...registerField('fullName', { required: true })}
                       placeholder="e.g. John Quantum"
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-slate-900 dark:text-white"
