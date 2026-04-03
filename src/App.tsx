@@ -229,17 +229,17 @@ const PRODUCT_TOUR_MISSION: Mission = {
 // Action sequence for the action engine demo
 const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
   {
-    id: 'scroll-to-dashboard',
+    id: 'scroll-to-form',
     type: 'scroll',
-    config: { selector: '#dashboard-header', behavior: 'smooth' },
-    label: 'Scroll to dashboard',
+    config: { selector: '#fullName', behavior: 'smooth' },
+    label: 'Scroll to name field',
   },
   {
     id: 'wait-for-render',
     type: 'wait',
     config: { durationMs: 800 },
     label: 'Wait for render',
-    dependsOn: ['scroll-to-dashboard'],
+    dependsOn: ['scroll-to-form'],
   },
   {
     id: 'fill-name',
@@ -522,7 +522,8 @@ export default function App() {
                 <form onSubmit={handleFormSubmit} className="space-y-5">
                   <div className={cn("space-y-1.5 group", currentStep?.targetField === 'fullName' && "ring-2 ring-indigo-500 ring-offset-4 ring-offset-slate-50 rounded-lg p-1 animate-pulse")}>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Full Name</label>
-                    <input 
+                    <input
+                      id="fullName"
                       {...registerField('fullName', { required: true })}
                       placeholder="e.g. John Quantum"
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-slate-900 dark:text-white"
@@ -582,7 +583,7 @@ export default function App() {
 
             {/* Right Column: Dashboard */}
             <div className="flex-1 space-y-8">
-              <header id="dashboard-header" className="flex items-center justify-between">
+              <header className="flex items-center justify-between">
                 <div>
                   <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Project Delta</h1>
                   <p className="text-slate-500 dark:text-slate-400 font-medium">Welcome back, {String(fieldValues.fullName || 'Commander')}. Nodes are stable.</p>
