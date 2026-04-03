@@ -301,7 +301,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                 <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">{activeMission.title}</p>
               </div>
             </div>
-            <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={() => store.pauseMission()}>
+            <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={() => store.resetMission()}>
               <X size={18} />
             </button>
           </div>
