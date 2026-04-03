@@ -11,45 +11,65 @@ export interface UseChaloOptions<TFieldValues extends FieldValues = FieldValues>
 
 export function useChalo<TFieldValues extends FieldValues = FieldValues>(options: UseChaloOptions<TFieldValues> = {}) {
   const { form, onMissionComplete, onStepChange } = options;
-  const store = useChaloStore();
+  
+  // Use specific selectors for better stability
+  const activeMissionId = useChaloStore(s => s.activeMissionId);
+  const currentStepId = useChaloStore(s => s.currentStepId);
+  const isCompleted = useChaloStore(s => s.isCompleted);
+  const isPaused = useChaloStore(s => s.isPaused);
+  const missions = useChaloStore(s => s.missions);
+  const fieldValues = useChaloStore(s => s.fieldValues);
+  const fieldStates = useChaloStore(s => s.fieldStates);
+  const interactionHistory = useChaloStore(s => s.interactionHistory);
+
+  // Actions
+  const updateFieldInStore = useChaloStore(s => s.updateField);
+  const startMissionInStore = useChaloStore(s => s.startMission);
+  const pauseMissionInStore = useChaloStore(s => s.pauseMission);
+  const resumeMissionInStore = useChaloStore(s => s.resumeMission);
+  const completeMission = useChaloStore(s => s.completeMission);
+  const goToStep = useChaloStore(s => s.goToStep);
+  const reset = useChaloStore(s => s.reset);
+  const addInteraction = useChaloStore(s => s.addInteraction);
+  const registerMission = useChaloStore(s => s.registerMission);
 
   const fieldErrors = useMemo(() => form?.formState.errors || {}, [form?.formState.errors]);
 
-  const getMission = useCallback((id: MissionId) => store.missions[id] || undefined, [store.missions]);
+  const getMission = useCallback((id: MissionId) => missions[id] || undefined, [missions]);
 
   const activeMission = useMemo(() => {
-    if (!store.activeMissionId) return null;
-    return getMission(store.activeMissionId) || null;
-  }, [store.activeMissionId, getMission]);
+    if (!activeMissionId) return null;
+    return getMission(activeMissionId) || null;
+  }, [activeMissionId, getMission]);
 
   const currentStep = useMemo(() => {
-    if (!activeMission || !store.currentStepId) return null;
-    return activeMission.steps.find((s) => s.id === store.currentStepId) || null;
-  }, [activeMission, store.currentStepId]);
+    if (!activeMission || !currentStepId) return null;
+    return activeMission.steps.find((s) => s.id === currentStepId) || null;
+  }, [activeMission, currentStepId]);
 
   // Sync with react-hook-form
   useEffect(() => {
-    if (!form || !store.activeMissionId) return;
+    if (!form || !activeMissionId) return;
 
     // Initial sync of all values
     const currentValues = form.getValues();
     Object.entries(currentValues).forEach(([name, value]) => {
-      store.updateField(name, value);
+      updateFieldInStore(name, value);
     });
 
     const subscription = form.watch((value, { name }) => {
       if (name) {
-        store.updateField(name, value[name]);
+        updateFieldInStore(name, value[name]);
       } else {
         // Bulk update (e.g. from reset)
         Object.entries(value).forEach(([n, v]) => {
-          store.updateField(n, v);
+          updateFieldInStore(n, v);
         });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form, store.activeMissionId, store]);
+  }, [form, activeMissionId, updateFieldInStore]); // Dependencies are now granular
 
   // Handle focus when step changes
   useEffect(() => {
@@ -58,46 +78,46 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         form.setFocus(currentStep.targetField as Path<TFieldValues>);
       }, 100);
     }
-    if (onStepChange && store.currentStepId) {
-      onStepChange(store.currentStepId);
+    if (onStepChange && currentStepId) {
+      onStepChange(currentStepId);
     }
-  }, [store.currentStepId, currentStep, form, onStepChange]);
+  }, [currentStepId, currentStep, form, onStepChange]);
 
   // Handle mission completion
   useEffect(() => {
-    if (store.isCompleted && store.activeMissionId && onMissionComplete) {
-      onMissionComplete(store.activeMissionId);
+    if (isCompleted && activeMissionId && onMissionComplete) {
+      onMissionComplete(activeMissionId);
     }
-  }, [store.isCompleted, store.activeMissionId, onMissionComplete]);
+  }, [isCompleted, activeMissionId, onMissionComplete]);
 
   // Progress calculation
   const missionProgress = useMemo(() => {
-    if (!activeMission || !store.currentStepId) return 0;
-    const currentIndex = activeMission.steps.findIndex((s) => s.id === store.currentStepId);
+    if (!activeMission || !currentStepId) return 0;
+    const currentIndex = activeMission.steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex === -1) return 0;
     return Math.round(((currentIndex + 1) / activeMission.steps.length) * 100);
-  }, [activeMission, store.currentStepId]);
+  }, [activeMission, currentStepId]);
 
   // Methods
   const nextStep = useCallback(() => {
-    if (!activeMission || !store.currentStepId) return;
+    if (!activeMission || !currentStepId) return;
     const steps = activeMission.steps;
-    const currentIndex = steps.findIndex((s) => s.id === store.currentStepId);
+    const currentIndex = steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex < steps.length - 1) {
-      store.goToStep(steps[currentIndex + 1].id);
+      goToStep(steps[currentIndex + 1].id);
     } else {
-      store.completeMission();
+      completeMission();
     }
-  }, [activeMission, store]);
+  }, [activeMission, currentStepId, goToStep, completeMission]);
 
   const prevStep = useCallback(() => {
-    if (!activeMission || !store.currentStepId) return;
+    if (!activeMission || !currentStepId) return;
     const steps = activeMission.steps;
-    const currentIndex = steps.findIndex((s) => s.id === store.currentStepId);
+    const currentIndex = steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex > 0) {
-      store.goToStep(steps[currentIndex - 1].id);
+      goToStep(steps[currentIndex - 1].id);
     }
-  }, [activeMission, store]);
+  }, [activeMission, currentStepId, goToStep]);
 
   const fillField = useCallback(
     (name: Path<TFieldValues>, value: PathValue<TFieldValues, Path<TFieldValues>>) => {
@@ -107,12 +127,10 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
           shouldDirty: true,
           shouldTouch: true,
         });
-        store.updateField(name, value);
-      } else {
-        store.updateField(name, value);
       }
+      updateFieldInStore(name, value);
     },
-    [form, store]
+    [form, updateFieldInStore]
   );
 
   const registerField = useCallback(
@@ -122,9 +140,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
           id: name,
           name,
           onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
-            store.updateField(name, e.target.value),
-          onFocus: () => store.updateField(name, store.fieldValues[name], 'focused'),
-          onBlur: () => store.updateField(name, store.fieldValues[name], 'idle'),
+            updateFieldInStore(name, e.target.value),
+          onFocus: () => updateFieldInStore(name, fieldValues[name], 'focused'),
+          onBlur: () => updateFieldInStore(name, fieldValues[name], 'idle'),
         };
       }
       const registered = form.register(name, rhfOptions);
@@ -132,19 +150,34 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         ...registered,
         onChange: async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onChange(e);
-          store.updateField(name, e.target.value);
+          updateFieldInStore(name, e.target.value);
         },
         onBlur: async (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onBlur(e);
-          store.updateField(name, store.fieldValues[name], 'idle');
+          updateFieldInStore(name, fieldValues[name], 'idle');
         }
       };
     },
-    [form, store]
+    [form, updateFieldInStore, fieldValues]
   );
 
   return {
-    ...store,
+    activeMissionId,
+    currentStepId,
+    isCompleted,
+    isPaused,
+    missions,
+    fieldValues,
+    fieldStates,
+    interactionHistory,
+    startMission: startMissionInStore,
+    pauseMission: pauseMissionInStore,
+    resumeMission: resumeMissionInStore,
+    completeMission,
+    goToStep,
+    reset,
+    addInteraction,
+    registerMission,
     activeMission,
     currentStep,
     missionProgress,

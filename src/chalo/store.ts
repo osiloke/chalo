@@ -66,6 +66,9 @@ export const useChaloStore = create<ChaloStore>()(
       },
 
       updateField: (name, value, status = 'idle') => {
+        const { fieldValues, fieldStates } = get();
+        if (fieldValues[name] === value && fieldStates[name] === status) return;
+
         set((state) => ({
           fieldValues: { ...state.fieldValues, [name]: value },
           fieldStates: { ...state.fieldStates, [name]: status },
