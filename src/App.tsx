@@ -5,9 +5,8 @@ import {
   useChalo,
   useChaloFieldSync,
   Mission,
-  CreateProjectModal,
-  type CreateProjectFormData,
 } from './chalo';
+import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
 import {
   LayoutDashboard,
   Users,
