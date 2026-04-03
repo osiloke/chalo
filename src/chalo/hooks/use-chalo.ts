@@ -34,6 +34,11 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const dismissAllTours = useChaloStore(s => s.dismissAllTours);
   const markMissionCompleted = useChaloStore(s => s.markMissionCompleted);
   const completedMissions = useChaloStore(s => s.completedMissions);
+  const executionContext = useChaloStore(s => s.executionContext);
+  const registerActionHandler = useChaloStore(s => s.registerActionHandler);
+  const executeAction = useChaloStore(s => s.executeAction);
+  const executeActionSequence = useChaloStore(s => s.executeActionSequence);
+  const cancelExecution = useChaloStore(s => s.cancelExecution);
   const addInteraction = useChaloStore(s => s.addInteraction);
   const registerMission = useChaloStore(s => s.registerMission);
   const recordTourEntry = useChaloStore(s => s.recordTourEntry);
@@ -136,6 +141,22 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       onStepChange(currentStepId);
     }
   }, [currentStepId, currentStep, form, onStepChange, fieldValues]);
+
+  // Auto-execute action sequence when step changes and has actions
+  const executedSequenceRef = useRef<Set<string>>(new Set());
+
+  // Reset executed sequences when mission changes
+  useEffect(() => {
+    executedSequenceRef.current.clear();
+  }, [activeMissionId]);
+
+  useEffect(() => {
+    if (!currentStep?.actionSequence || !currentStepId) return;
+    if (executedSequenceRef.current.has(currentStepId)) return;
+
+    executedSequenceRef.current.add(currentStepId);
+    executeActionSequence(currentStep.actionSequence, currentStepId);
+  }, [currentStepId, currentStep?.actionSequence, executeActionSequence]);
 
   // Handle mission completion
   useEffect(() => {
@@ -323,6 +344,11 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     dismissAllTours,
     markMissionCompleted,
     completedMissions,
+    executionContext,
+    registerActionHandler,
+    executeAction,
+    executeActionSequence,
+    cancelExecution,
     addInteraction,
     registerMission,
     activeMission,

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ChaloStore, Mission, MissionId, StepId, ChaloState } from './types';
+import { ChaloStore, Mission, MissionId, StepId, ChaloState, Action, ActionType, ActionHandler } from './types';
+import { actionEngine } from './engine';
 
 const initialState: ChaloState = {
   activeMissionId: null,
@@ -12,6 +13,12 @@ const initialState: ChaloState = {
   interactionHistory: [],
   tourHistory: {},
   completedMissions: [],
+  executionContext: {
+    results: {},
+    variables: {},
+    isRunning: false,
+    currentActionId: null,
+  },
   isPaused: false,
   isCompleted: false,
   error: null,
@@ -110,6 +117,12 @@ export const useChaloStore = create<ChaloStore>()(
           fieldValues: {},
           fieldStates: {},
           interactionHistory: [],
+          executionContext: {
+            results: {},
+            variables: {},
+            isRunning: false,
+            currentActionId: null,
+          },
           isPaused: false,
           isCompleted: false,
           error: null,
@@ -125,7 +138,7 @@ export const useChaloStore = create<ChaloStore>()(
         }));
       },
 
-      markMissionCompleted: (missionId) => {
+      markMissionCompleted: (missionId: MissionId) => {
         const { missions } = get();
         const mission = missions[missionId];
         // Only allow marking if the mission explicitly allows completion
@@ -137,6 +150,56 @@ export const useChaloStore = create<ChaloStore>()(
           completedMissions: state.completedMissions.includes(missionId)
             ? state.completedMissions
             : [...state.completedMissions, missionId],
+        }));
+      },
+
+      registerActionHandler: (type: ActionType, handler: ActionHandler) => {
+        actionEngine.registerHandler(type, handler);
+      },
+
+      executeAction: async (action: Action) => {
+        const { executionContext } = get();
+        set((state) => ({
+          executionContext: { ...state.executionContext, isRunning: true },
+        }));
+        const result = await actionEngine.executeAction(action, executionContext);
+        set((state) => ({
+          executionContext: { ...state.executionContext, ...executionContext, isRunning: false },
+        }));
+        return result;
+      },
+
+      executeActionSequence: async (actions: Action[], stepId?: string) => {
+        const { executionContext, addInteraction } = get();
+        // Reset context for new sequence
+        executionContext.results = {};
+        executionContext.variables = {};
+        executionContext.isRunning = true;
+        set((state) => ({
+          executionContext: { ...state.executionContext, ...executionContext },
+        }));
+
+        const results = await actionEngine.executeSequence(actions, executionContext, (results) => {
+          set((state) => ({
+            executionContext: { ...state.executionContext, results, isRunning: true },
+          }));
+          // Report progress to interaction history
+          if (stepId) {
+            const completed = Object.values(results).filter((r) => r.status === 'success').length;
+            addInteraction(stepId, `Action progress: ${completed}/${actions.length} completed`);
+          }
+        });
+
+        set((state) => ({
+          executionContext: { ...state.executionContext, results, isRunning: false, currentActionId: null },
+        }));
+        return results;
+      },
+
+      cancelExecution: () => {
+        actionEngine.cancel();
+        set((state) => ({
+          executionContext: { ...state.executionContext, isRunning: false, currentActionId: null },
         }));
       },
 

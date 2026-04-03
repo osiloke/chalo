@@ -2,10 +2,10 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChaloStore } from '../store';
 import { useChalo } from '../hooks/use-chalo';
-import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw } from 'lucide-react';
+import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Bubble as BubbleType, StepAction } from '../types';
+import { Bubble as BubbleType, StepAction, ActionResult } from '../types';
 import { TargetHighlight } from './TargetHighlight';
 
 function cn(...inputs: ClassValue[]) {
@@ -94,6 +94,28 @@ const ActionGroupBubble = ({
   </div>
 );
 
+const ActionStatusBubble = ({ result }: { result: ActionResult }) => {
+  const statusConfig = {
+    running: { icon: Loader2, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', label: 'Executing...' },
+    success: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', label: 'Completed' },
+    failed: { icon: AlertCircle, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/10', border: 'border-rose-200 dark:border-rose-800/30', label: 'Failed' },
+    cancelled: { icon: XCircle, color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/10', border: 'border-slate-200 dark:border-slate-700/30', label: 'Cancelled' },
+    skipped: { icon: ChevronRight, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/10', border: 'border-amber-200 dark:border-amber-800/30', label: 'Skipped' },
+    pending: { icon: Loader2, color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/10', border: 'border-slate-200 dark:border-slate-700/30', label: 'Pending' },
+  };
+  const cfg = statusConfig[result.status];
+  const Icon = cfg.icon;
+
+  return (
+    <div className={cn("flex items-center space-x-3 px-4 py-2.5 rounded-xl border text-sm", cfg.bg, cfg.border)}>
+      <Icon size={16} className={cn(cfg.color, result.status === 'running' && 'animate-spin')} />
+      <span className={cn("font-medium", cfg.color)}>{cfg.label}</span>
+      {result.error && <span className="text-xs text-rose-400 ml-2">{result.error}</span>}
+      {result.attempts > 1 && <span className="text-xs text-slate-400 ml-1">({result.attempts} attempts)</span>}
+    </div>
+  );
+};
+
 const BubbleRenderer = ({ 
   bubble, 
   fieldValues, 
@@ -162,7 +184,7 @@ const BubbleRenderer = ({
 
 export function SmartDrawer({ className }: { className?: string }) {
   const store = useChaloStore();
-  const { activeMission, currentStep, nextStep, prevStep, fillField, fieldErrors, fieldValues } = useChalo();
+  const { activeMission, currentStep, nextStep, prevStep, fillField, fieldErrors, fieldValues, executionContext, cancelExecution } = useChalo();
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -374,6 +396,30 @@ export function SmartDrawer({ className }: { className?: string }) {
                           }
                         }}
                      />
+                  )}
+
+                  {/* Action execution status */}
+                  {currentStep?.actionSequence && Object.keys(executionContext.results).length > 0 && (
+                    <div className="space-y-2">
+                      {currentStep.actionSequence.map((action) => {
+                        const result = executionContext.results[action.id];
+                        if (!result) return null;
+                        return (
+                          <div key={action.id} className="flex justify-start w-full">
+                            <ActionStatusBubble result={result} />
+                          </div>
+                        );
+                      })}
+                      {executionContext.isRunning && (
+                        <button
+                          onClick={cancelExecution}
+                          className="flex items-center space-x-1 text-xs text-rose-500 hover:text-rose-600 font-medium ml-2 mt-1"
+                        >
+                          <XCircle size={12} />
+                          <span>Cancel execution</span>
+                        </button>
+                      )}
+                    </div>
                   )}
                </motion.div>
             )}

@@ -5,6 +5,7 @@ import {
   useChalo,
   useChaloFieldSync,
   Mission,
+  Action,
 } from './chalo';
 import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
 import {
@@ -225,6 +226,56 @@ const PRODUCT_TOUR_MISSION: Mission = {
   ]
 };
 
+// Action sequence for the action engine demo
+const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
+  {
+    id: 'scroll-to-dashboard',
+    type: 'scroll',
+    config: { selector: '#dashboard-header', behavior: 'smooth' },
+    label: 'Scroll to dashboard',
+  },
+  {
+    id: 'wait-for-render',
+    type: 'wait',
+    config: { durationMs: 800 },
+    label: 'Wait for render',
+    dependsOn: ['scroll-to-dashboard'],
+  },
+  {
+    id: 'fill-name',
+    type: 'fill_field',
+    config: { field: 'fullName', value: 'Action Engine Demo' },
+    label: 'Fill name field',
+    dependsOn: ['wait-for-render'],
+  },
+];
+
+const ACTION_ENGINE_MISSION: Mission = {
+  id: 'action-engine-demo',
+  title: 'Action Engine Demo',
+  description: 'Demonstrates the action execution engine with scroll, wait, and fill_field.',
+  allowCompletion: true,
+  steps: [
+    {
+      id: 'ae-intro',
+      title: 'Action Engine',
+      content: 'This demo shows the action execution engine. Actions will execute automatically: scroll, wait, then fill the form field.',
+      navigationRules: { canGoBack: false },
+    },
+    {
+      id: 'ae-execute',
+      title: 'Executing Actions',
+      content: 'Watch the action execution status below. Each action runs with progress reporting.',
+      actionSequence: ACTION_ENGINE_DEMO_ACTIONS,
+    },
+    {
+      id: 'ae-complete',
+      title: 'Actions Complete',
+      content: 'All actions executed successfully. The engine supports retry, cancellation, and dependency resolution.',
+    },
+  ],
+};
+
 // --- COMPONENTS ---
 
 interface DashboardCardProps {
@@ -301,6 +352,7 @@ export default function App() {
     registerMission(ONBOARDING_MISSION);
     registerMission(DASHBOARD_TUTORIAL);
     registerMission(PRODUCT_TOUR_MISSION);
+    registerMission(ACTION_ENGINE_MISSION);
   }, [registerMission]);
 
   useEffect(() => {
@@ -422,6 +474,18 @@ export default function App() {
                   </button>
 
                   <button
+                     onClick={() => startMission('action-engine-demo')}
+                     disabled={activeMission?.id === 'action-engine-demo'}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                  >
+                     <div className="flex items-center space-x-3">
+                      <Activity size={18} />
+                      <span className="font-semibold text-slate-500">Action Engine Demo</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
                     id="btn-create-project"
                     onClick={handleCreateProjectClick}
                     className="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95 transition-all"
@@ -518,7 +582,7 @@ export default function App() {
 
             {/* Right Column: Dashboard */}
             <div className="flex-1 space-y-8">
-              <header className="flex items-center justify-between">
+              <header id="dashboard-header" className="flex items-center justify-between">
                 <div>
                   <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Project Delta</h1>
                   <p className="text-slate-500 dark:text-slate-400 font-medium">Welcome back, {String(fieldValues.fullName || 'Commander')}. Nodes are stable.</p>
