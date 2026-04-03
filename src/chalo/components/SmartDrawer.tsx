@@ -302,7 +302,6 @@ export function SmartDrawer({ className }: { className?: string }) {
               </div>
             </div>
             <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={() => {
-              // Dismiss all incomplete tours so the resume prompt doesn't reappear
               store.dismissAllTours();
               store.resetMission();
             }}>

@@ -386,7 +386,7 @@ export default function App() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Trigger and track your active guiding missions.</p>
                 
                 <div className="space-y-4">
-                   <button 
+                   <button
                     onClick={() => startMission('saas-onboarding')}
                     disabled={activeMission?.id === 'saas-onboarding'}
                     className="w-full flex items-center justify-between p-4 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50"
@@ -550,12 +550,9 @@ export default function App() {
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <DashboardCard 
-                  title="Active Clusters" value="242" trend="12.5" icon={LayoutDashboard} color="bg-indigo-500" 
+                <DashboardCard
+                  title="Active Clusters" value="242" trend="12.5" icon={LayoutDashboard} color="bg-indigo-500"
                   isHighlighted={currentStep?.id === 'kpi-cards'}
-                  onHover={() => {
-                    if (!activeMission) startMission('dashboard-tutorial');
-                  }}
                 />
                 <DashboardCard 
                   title="Incoming Packets" value="954k" trend="8.2" icon={Activity} color="bg-rose-500" 
