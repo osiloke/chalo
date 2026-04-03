@@ -11,7 +11,7 @@ export interface UseChaloOptions<TFieldValues extends FieldValues = FieldValues>
 
 export function useChalo<TFieldValues extends FieldValues = FieldValues>(options: UseChaloOptions<TFieldValues> = {}) {
   const { form, onMissionComplete, onStepChange } = options;
-  
+
   // Use specific selectors for better stability
   const activeMissionId = useChaloStore(s => s.activeMissionId);
   const currentStepId = useChaloStore(s => s.currentStepId);
@@ -55,33 +55,75 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     return activeMission.steps.find((s) => s.id === currentStepId) || null;
   }, [activeMission, currentStepId]);
 
-  // Sync with react-hook-form
+  // --- BIDIRECTIONAL SYNC: Form ↔ Store ---
+
+  // Track previous store values to detect external changes and prevent loops
+  const prevFieldValuesRef = useRef<Record<string, unknown>>({});
+  // Track which fields were updated by the form (to skip reverse-sync for them)
+  const formUpdatedRef = useRef<Set<string>>(new Set());
+
+  // Direction 1: Form → Store (on any form value change)
   useEffect(() => {
     if (!form || !activeMissionId) return;
 
-    // Initial sync of all values
-    const currentValues = form.getValues();
-    Object.entries(currentValues).forEach(([name, value]) => {
-      updateFieldInStore(name, value);
-    });
-
     const subscription = form.watch((value, { name }) => {
       if (name) {
-        updateFieldInStore(name, value[name]);
+        const val = value[name];
+        formUpdatedRef.current.add(name);
+        updateFieldInStore(name, val);
       } else {
         // Bulk update (e.g. from reset)
         Object.entries(value).forEach(([n, v]) => {
+          formUpdatedRef.current.add(n);
           updateFieldInStore(n, v);
         });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form, activeMissionId, updateFieldInStore]); // Dependencies are now granular
+  }, [form, activeMissionId, updateFieldInStore]);
 
-  // Handle focus when step changes
+  // Direction 2: Store → Form (reverse sync when store changes externally)
+  useEffect(() => {
+    if (!form || !activeMissionId) return;
+
+    Object.entries(fieldValues).forEach(([name, storeVal]) => {
+      // Skip if this change originated from the form itself
+      if (formUpdatedRef.current.has(name)) {
+        formUpdatedRef.current.delete(name);
+        prevFieldValuesRef.current[name] = storeVal;
+        return;
+      }
+
+      // Only update form if the store value actually changed
+      const prevVal = prevFieldValuesRef.current[name];
+      if (prevVal !== storeVal) {
+        try {
+          form.setValue(name as Path<TFieldValues>, storeVal as PathValue<TFieldValues, Path<TFieldValues>>, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        } catch {
+          // Field may not be registered in this form (e.g., modal form field)
+        }
+        prevFieldValuesRef.current[name] = storeVal;
+      }
+    });
+  }, [fieldValues, form, activeMissionId]);
+
+  // Handle focus when step changes + pre-populate from store
   useEffect(() => {
     if (currentStep?.targetField && form) {
+      // Pre-populate the field from store value if it exists
+      const storeVal = fieldValues[currentStep.targetField];
+      if (storeVal !== undefined) {
+        try {
+          form.setValue(currentStep.targetField as Path<TFieldValues>, storeVal as PathValue<TFieldValues, Path<TFieldValues>>);
+        } catch {
+          // Field may not exist in this form
+        }
+      }
       setTimeout(() => {
         form.setFocus(currentStep.targetField as Path<TFieldValues>);
       }, 100);
@@ -112,7 +154,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     switch (condition.type) {
       case 'field_value':
         if (!condition.field) return false;
-        return fieldValues[condition.field] === condition.value;
+        // Use loose equality to handle type coercion (e.g., "5" == 5)
+        // eslint-disable-next-line eqeqeq
+        return fieldValues[condition.field] == condition.value;
       case 'field_touched':
         if (!condition.field) return false;
         return (fieldStates[condition.field] || 'idle') !== 'idle';
@@ -169,27 +213,44 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     return () => clearInterval(interval);
   }, [currentStep?.id, currentStep?.waitFor, evaluateCondition, nextStep]);
 
+  // Generic fillField: works with any string key, updates store always,
+  // and attempts to update the primary form if the field is registered there.
+  // This enables cross-form updates (e.g., bubble auto-fill reaching a modal form).
   const fillField = useCallback(
-    (name: Path<TFieldValues>, value: PathValue<TFieldValues, Path<TFieldValues>>) => {
-      if (form) {
-        form.setValue(name, value, {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        });
-      }
+    (name: string, value: unknown) => {
+      formUpdatedRef.current.add(name);
       updateFieldInStore(name, value);
+      if (form) {
+        try {
+          form.setValue(name as Path<TFieldValues>, value as PathValue<TFieldValues, Path<TFieldValues>>, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        } catch {
+          // Field may not be registered in this form
+        }
+      }
     },
     [form, updateFieldInStore]
   );
 
   const registerField = useCallback(
     (name: Path<TFieldValues>, rhfOptions?: RegisterOptions<TFieldValues>) => {
+      // Pre-populate from store if a value already exists
+      if (fieldValues[name] !== undefined && form) {
+        try {
+          form.setValue(name, fieldValues[name] as PathValue<TFieldValues, Path<TFieldValues>>);
+        } catch {
+          // Field may have incompatible type
+        }
+      }
+
       if (!form) {
         return {
           id: name,
           name,
-          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
             updateFieldInStore(name, e.target.value),
           onFocus: () => updateFieldInStore(name, fieldValues[name], 'focused'),
           onBlur: () => updateFieldInStore(name, fieldValues[name], 'idle'),
@@ -240,4 +301,61 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     tourHistory,
     evaluateCondition,
   };
+}
+
+/**
+ * Bidirectional sync hook for secondary forms (e.g., modal forms).
+ * Call this in any component that has a `useForm` instance and wants
+ * its fields to stay in sync with the Chalo store.
+ */
+export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues>(
+  form: UseFormReturn<TFieldValues>,
+  enabled = true,
+) {
+  const fieldValues = useChaloStore(s => s.fieldValues);
+  const updateFieldInStore = useChaloStore(s => s.updateField);
+  const formUpdatedRef = useRef<Set<string>>(new Set());
+  const prevFieldValuesRef = useRef<Record<string, unknown>>({});
+
+  // Direction 1: Form → Store
+  useEffect(() => {
+    if (!enabled) return;
+    const subscription = form.watch((value, { name }) => {
+      if (name) {
+        formUpdatedRef.current.add(name);
+        updateFieldInStore(name, value[name]);
+      } else {
+        Object.entries(value).forEach(([n, v]) => {
+          formUpdatedRef.current.add(n);
+          updateFieldInStore(n, v);
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, updateFieldInStore, enabled]);
+
+  // Direction 2: Store → Form
+  useEffect(() => {
+    if (!enabled) return;
+    Object.entries(fieldValues).forEach(([name, storeVal]) => {
+      if (formUpdatedRef.current.has(name)) {
+        formUpdatedRef.current.delete(name);
+        prevFieldValuesRef.current[name] = storeVal;
+        return;
+      }
+      const prevVal = prevFieldValuesRef.current[name];
+      if (prevVal !== storeVal) {
+        try {
+          form.setValue(name as Path<TFieldValues>, storeVal as PathValue<TFieldValues, Path<TFieldValues>>, {
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        } catch {
+          // Field may not be registered
+        }
+        prevFieldValuesRef.current[name] = storeVal;
+      }
+    });
+  }, [fieldValues, form, enabled]);
 }

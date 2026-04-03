@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import {
   SmartDrawer,
   useChalo,
+  useChaloFieldSync,
   Mission,
   CreateProjectModal,
   type CreateProjectFormData,
-  useChaloStore,
 } from './chalo';
 import {
   LayoutDashboard,
@@ -322,32 +322,8 @@ export default function App() {
     }
   };
 
-  // Sync tour form fields with chalo store for the product tour
-  const updateFieldInStore = useChaloStore(s => s.updateField);
-  useEffect(() => {
-    if (activeMission?.id !== 'product-tour-create') return;
-    const subscription = tourForm.watch((value, { name }) => {
-      if (name) {
-        updateFieldInStore(name, value[name as keyof CreateProjectFormData]);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [activeMission?.id, tourForm, updateFieldInStore]);
-
-  // Register modal fields when the modal step is active
-  const registerTourField = useCallback(
-    (name: keyof CreateProjectFormData, options?: Record<string, unknown>) => {
-      const registered = tourForm.register(name, options as Parameters<typeof tourForm.register>[1]);
-      return {
-        ...registered,
-        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-          registered.onChange(e);
-          updateFieldInStore(name, e.target.value);
-        },
-      };
-    },
-    [tourForm, updateFieldInStore]
-  );
+  // Bidirectional sync for the modal form (encapsulated in hook)
+  useChaloFieldSync(tourForm, activeMission?.id === 'product-tour-create');
 
   const handleCreateProjectClick = () => {
     setIsCreateModalOpen(true);
@@ -682,7 +658,6 @@ export default function App() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateProject}
-        registerField={activeMission?.id === 'product-tour-create' ? registerTourField : undefined}
         currentStepTarget={activeMission?.id === 'product-tour-create' ? currentStep?.targetField : undefined}
       />
     </div>

@@ -20,10 +20,6 @@ interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateProjectFormData) => void;
-  registerField?: (
-    name: keyof CreateProjectFormData,
-    options?: Record<string, unknown>
-  ) => Record<string, unknown>;
   currentStepTarget?: string;
 }
 
@@ -31,7 +27,6 @@ export function CreateProjectModal({
   isOpen,
   onClose,
   onSubmit,
-  registerField,
   currentStepTarget,
 }: CreateProjectModalProps) {
   const form = useForm<CreateProjectFormData>({
@@ -58,9 +53,6 @@ export function CreateProjectModal({
   });
 
   const field = (name: keyof CreateProjectFormData) => {
-    if (registerField) {
-      return registerField(name, name === 'projectName' ? { required: true } : undefined);
-    }
     return form.register(name, name === 'projectName' ? { required: true } : undefined);
   };
 
