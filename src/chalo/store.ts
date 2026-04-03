@@ -75,7 +75,7 @@ export const useChaloStore = create<ChaloStore>()(
       addInteraction: (stepId, actionText) => {
         set((state) => ({
           interactionHistory: [
-            ...state.interactionHistory,
+            ...state.interactionHistory.filter(i => i.stepId !== stepId),
             { stepId, actionText, timestamp: Date.now() },
           ],
         }));

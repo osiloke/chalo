@@ -118,7 +118,6 @@ const BubbleRenderer = ({
           value={fieldValues[bubble.targetField!]} 
           onChange={(v) => {
             onFill(bubble.targetField!, v);
-            onInteraction(`Manually entered ${bubble.targetField}: ${v}`);
           }} 
         />
       );
@@ -130,7 +129,6 @@ const BubbleRenderer = ({
           value={fieldValues[bubble.targetField!]} 
           onChange={(v) => {
             onFill(bubble.targetField!, v);
-            onInteraction(`Selected ${bubble.targetField}: ${v}`);
           }} 
         />
       );
@@ -330,7 +328,14 @@ export function SmartDrawer({ className }: { className?: string }) {
           {/* Footer */}
           <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <div className="flex items-center justify-between space-x-2">
-                <button onClick={prevStep} disabled={activeMission.steps.indexOf(currentStep) === 0} className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-colors">
+                <button 
+                  onClick={() => {
+                    store.addInteraction(currentStep.id, "Navigated backwards");
+                    prevStep();
+                  }} 
+                  disabled={activeMission.steps.indexOf(currentStep) === 0} 
+                  className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-colors"
+                >
                   <ChevronLeft size={20} />
                 </button>
                 <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 flex items-center overflow-hidden">
@@ -339,7 +344,15 @@ export function SmartDrawer({ className }: { className?: string }) {
                     </span>
                 </div>
                 <button
-                  onClick={nextStep}
+                  onClick={() => {
+                    if (currentStep.targetField) {
+                      const val = fieldValues[currentStep.targetField];
+                      store.addInteraction(currentStep.id, `Confirmed value: ${val}`);
+                    } else if (!store.interactionHistory.find(i => i.stepId === currentStep.id)) {
+                      store.addInteraction(currentStep.id, "Proceeded to next step");
+                    }
+                    nextStep();
+                  }}
                   disabled={(currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) || activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1}
                   className={cn("p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50")}
                 >

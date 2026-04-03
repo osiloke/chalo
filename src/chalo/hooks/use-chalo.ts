@@ -31,9 +31,20 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   useEffect(() => {
     if (!form || !store.activeMissionId) return;
 
+    // Initial sync of all values
+    const currentValues = form.getValues();
+    Object.entries(currentValues).forEach(([name, value]) => {
+      store.updateField(name, value);
+    });
+
     const subscription = form.watch((value, { name }) => {
       if (name) {
         store.updateField(name, value[name]);
+      } else {
+        // Bulk update (e.g. from reset)
+        Object.entries(value).forEach(([n, v]) => {
+          store.updateField(n, v);
+        });
       }
     });
 
