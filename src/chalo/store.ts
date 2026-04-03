@@ -114,6 +114,14 @@ export const useChaloStore = create<ChaloStore>()(
         });
       },
 
+      dismissAllTours: () => {
+        set((state) => ({
+          tourHistory: Object.fromEntries(
+            Object.entries(state.tourHistory).map(([id, entry]) => [id, { ...entry, completed: true }])
+          ),
+        }));
+      },
+
       reset: () => set(initialState),
 
       setError: (error: string | null) => set({ error }),

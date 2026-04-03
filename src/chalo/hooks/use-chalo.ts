@@ -319,6 +319,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     goToStep,
     reset,
     resetMission,
+    dismissAllTours: useChaloStore(s => s.dismissAllTours),
     addInteraction,
     registerMission,
     activeMission,
