@@ -2,10 +2,11 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChaloStore } from '../store';
 import { useChalo } from '../hooks/use-chalo';
-import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type } from 'lucide-react';
+import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Bubble as BubbleType, StepAction } from '../types';
+import { TargetHighlight } from './TargetHighlight';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -220,10 +221,60 @@ export function SmartDrawer({ className }: { className?: string }) {
     }
   }, [chatHistory, isTyping]);
 
-  if (!activeMission || !currentStep) return null;
+  if (!activeMission || !currentStep) {
+    // Show resume prompt if there's an incomplete tour and no active mission
+    const incompleteTour = Object.values(store.tourHistory).find(
+      (t) => !t.completed && t.lastAccessed > Date.now() - 7 * 24 * 60 * 60 * 1000 // within 7 days
+    );
+    if (incompleteTour) {
+      const mission = store.missions[incompleteTour.missionId];
+      if (mission) {
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="h-screen w-[400px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]"
+          >
+            <div className="p-6 flex flex-col items-center text-center space-y-4">
+              <div className="p-4 bg-amber-500/10 rounded-2xl">
+                <RotateCcw size={32} className="text-amber-500" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Resume Tour?</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                You were taking the <strong>{mission.title}</strong> tour. Would you like to continue where you left off?
+              </p>
+              <div className="flex flex-col w-full space-y-2 pt-2">
+                <button
+                  onClick={() => {
+                    store.startMission(incompleteTour.missionId);
+                    if (incompleteTour.lastStepId) {
+                      store.goToStep(incompleteTour.lastStepId);
+                    }
+                  }}
+                  className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center space-x-2"
+                >
+                  <RotateCcw size={16} />
+                  <span>Resume Tour</span>
+                </button>
+                <button
+                  onClick={() => store.recordTourEntry(incompleteTour.missionId, incompleteTour.lastStepId, true)}
+                  className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        );
+      }
+    }
+    return null;
+  }
 
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.aside
@@ -232,7 +283,7 @@ export function SmartDrawer({ className }: { className?: string }) {
           exit={{ width: 0, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className={cn(
-            'h-screen overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0',
+            'h-screen overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]',
             className
           )}
         >
@@ -363,5 +414,14 @@ export function SmartDrawer({ className }: { className?: string }) {
         </motion.aside>
       )}
     </AnimatePresence>
+
+    {/* Target element highlight overlay */}
+    {currentStep?.targetElement && (
+      <TargetHighlight
+        selector={currentStep.targetElement}
+        label={currentStep.title}
+      />
+    )}
+    </>
   );
 }

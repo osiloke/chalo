@@ -1,14 +1,17 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { 
-  SmartDrawer, 
-  useChalo, 
-  Mission, 
+import {
+  SmartDrawer,
+  useChalo,
+  Mission,
+  CreateProjectModal,
+  type CreateProjectFormData,
+  useChaloStore,
 } from './chalo';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Bell, 
+import {
+  LayoutDashboard,
+  Users,
+  Bell,
   Sparkles,
   Play,
   ChevronRight,
@@ -18,7 +21,9 @@ import {
   Activity,
   Terminal,
   Grid,
-  Search
+  Search,
+  FolderPlus,
+  BookOpen,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -117,6 +122,110 @@ const DASHBOARD_TUTORIAL: Mission = {
   ]
 };
 
+const PRODUCT_TOUR_MISSION: Mission = {
+  id: 'product-tour-create',
+  title: 'Create Your First Project',
+  description: 'A guided walkthrough of the project creation flow.',
+  steps: [
+    {
+      id: 'tour-intro',
+      title: 'Welcome to the Tour!',
+      content: 'This tour will show you how to create a new project from start to finish. You\'ll interact with the real interface — not a simulation.',
+      navigationRules: { canGoBack: false },
+    },
+    {
+      id: 'find-create-btn',
+      title: 'Find the Create Button',
+      content: 'Look for the "Create Project" button in the Mission Center. Go ahead and click it — the form will open in a modal.',
+      targetElement: '#btn-create-project',
+      waitFor: {
+        type: 'custom',
+        predicate: () => {
+          const el = document.querySelector('#btn-create-project');
+          return el?.getAttribute('data-clicked') === 'true';
+        },
+      },
+      bubbles: [
+        { id: 'msg-create-1', type: 'message', content: 'Click the highlighted button below to open the creation form.' },
+      ],
+    },
+    {
+      id: 'modal-opened',
+      title: 'Great! The Form is Open',
+      content: 'This modal is where you configure your new project. All fields are real — try filling them in. I\'ll guide you through each one.',
+      bubbles: [
+        { id: 'msg-modal-1', type: 'message', content: 'Notice how the tour continues even though a modal is open. You can interact freely!' },
+        {
+          id: 'act-modal-1', type: 'action-group', actions: [
+            { label: 'I\'ve looked around, continue', type: 'next' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'fill-project-name',
+      title: 'Project Name',
+      content: 'Every project needs a unique name. You can type it in the modal form, or use the auto-fill below.',
+      targetField: 'projectName',
+      bubbles: [
+        { id: 'msg-name', type: 'message', content: 'Type a name in the modal, or let me fill one for you!' },
+        {
+          id: 'act-name', type: 'action-group', actions: [
+            { label: 'Auto-fill: Project Nebula', type: 'fill_field', data: { field: 'projectName', value: 'Project Nebula' } },
+          ],
+        },
+      ],
+      waitFor: {
+        type: 'field_value',
+        field: 'projectName',
+        value: 'Project Nebula',
+      },
+    },
+    {
+      id: 'fill-region',
+      title: 'Choose a Region',
+      content: 'Select the deployment region closest to your users. This affects latency and compliance.',
+      targetField: 'region',
+      bubbles: [
+        { id: 'msg-region', type: 'message', content: 'Pick a region from the dropdown in the modal.' },
+        {
+          id: 'act-region', type: 'action-group', actions: [
+            { label: 'Auto-fill: EU (Ireland)', type: 'fill_field', data: { field: 'region', value: 'eu-west-1' } },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'fill-team-size',
+      title: 'Set Team Size',
+      content: 'How many collaborators will join this project? Enter a number in the modal.',
+      targetField: 'teamSize',
+      bubbles: [
+        { id: 'msg-team', type: 'message', content: 'Enter your team size in the modal form.' },
+        {
+          id: 'act-team', type: 'action-group', actions: [
+            { label: 'Auto-fill: 5', type: 'fill_field', data: { field: 'teamSize', value: 5 } },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'submit-project',
+      title: 'Submit the Form',
+      content: 'Click "Create Project" in the modal to submit. All your values will be validated and the project will be created.',
+      targetField: 'submit_btn',
+      bubbles: [
+        { id: 'msg-submit', type: 'message', content: 'Hit the "Create Project" button in the modal when you\'re ready!' },
+      ],
+    },
+    {
+      id: 'tour-complete',
+      title: 'Tour Complete! 🎉',
+      content: 'You\'ve successfully walked through the project creation flow. You can now create projects on your own. Feel free to explore other features!',
+    },
+  ]
+};
+
 // --- COMPONENTS ---
 
 interface DashboardCardProps {
@@ -165,11 +274,23 @@ export default function App() {
     }
   });
 
-  const [dataType, setDataType] = useState<'realtime' | 'snapshots'>('realtime');
+  // Product tour modal form (separate from onboarding form)
+  const tourForm = useForm<CreateProjectFormData>({
+    defaultValues: {
+      projectName: '',
+      description: '',
+      region: 'us-east-1',
+      teamSize: 1,
+    },
+  });
 
-  const { 
-    registerMission, 
-    startMission, 
+  const [dataType, setDataType] = useState<'realtime' | 'snapshots'>('realtime');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createdProjects, setCreatedProjects] = useState<CreateProjectFormData[]>([]);
+
+  const {
+    registerMission,
+    startMission,
     registerField,
     activeMission,
     currentStep,
@@ -180,6 +301,7 @@ export default function App() {
   const handleRegisterMissions = useCallback(() => {
     registerMission(ONBOARDING_MISSION);
     registerMission(DASHBOARD_TUTORIAL);
+    registerMission(PRODUCT_TOUR_MISSION);
   }, [registerMission]);
 
   useEffect(() => {
@@ -191,6 +313,52 @@ export default function App() {
     alert('Workspace Initialized!');
     if (activeMission?.id === 'saas-onboarding') nextStep();
   });
+
+  const handleCreateProject = (data: CreateProjectFormData) => {
+    console.log('Project Created:', data);
+    setCreatedProjects((prev) => [...prev, data]);
+    if (activeMission?.id === 'product-tour-create') {
+      nextStep();
+    }
+  };
+
+  // Sync tour form fields with chalo store for the product tour
+  const updateFieldInStore = useChaloStore(s => s.updateField);
+  useEffect(() => {
+    if (activeMission?.id !== 'product-tour-create') return;
+    const subscription = tourForm.watch((value, { name }) => {
+      if (name) {
+        updateFieldInStore(name, value[name as keyof CreateProjectFormData]);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [activeMission?.id, tourForm, updateFieldInStore]);
+
+  // Register modal fields when the modal step is active
+  const registerTourField = useCallback(
+    (name: keyof CreateProjectFormData, options?: Record<string, unknown>) => {
+      const registered = tourForm.register(name, options as Parameters<typeof tourForm.register>[1]);
+      return {
+        ...registered,
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+          registered.onChange(e);
+          updateFieldInStore(name, e.target.value);
+        },
+      };
+    },
+    [tourForm, updateFieldInStore]
+  );
+
+  const handleCreateProjectClick = () => {
+    setIsCreateModalOpen(true);
+    // Mark the button as clicked for the waitFor condition
+    const btn = document.querySelector('#btn-create-project');
+    btn?.setAttribute('data-clicked', 'true');
+    // Advance tour past the "find button" step if we're on it
+    if (currentStep?.id === 'find-create-btn') {
+      nextStep();
+    }
+  };
 
   return (
     <div className="min-h-screen premium-gradient flex overflow-hidden">
@@ -254,7 +422,7 @@ export default function App() {
                     <ChevronRight size={18} />
                   </button>
 
-                  <button 
+                  <button
                      onClick={() => startMission('dashboard-tutorial')}
                      disabled={activeMission?.id === 'dashboard-tutorial'}
                     className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
@@ -262,6 +430,30 @@ export default function App() {
                      <div className="flex items-center space-x-3">
                       <Grid size={18} />
                       <span className="font-semibold text-slate-500">Dashboard Mastery</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                     onClick={() => startMission('product-tour-create')}
+                     disabled={activeMission?.id === 'product-tour-create'}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                  >
+                     <div className="flex items-center space-x-3">
+                      <BookOpen size={18} />
+                      <span className="font-semibold text-slate-500">Product Tour: Create</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                    id="btn-create-project"
+                    onClick={handleCreateProjectClick}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <FolderPlus size={18} />
+                      <span className="font-semibold">Create Project</span>
                     </div>
                     <ChevronRight size={18} />
                   </button>
@@ -324,6 +516,29 @@ export default function App() {
                   </button>
                 </form>
               </section>
+
+              {/* Created Projects (from product tour) */}
+              {createdProjects.length > 0 && (
+                <section className="glass p-8 rounded-3xl border-0 shadow-xl">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center space-x-2">
+                    <FolderPlus size={20} className="text-emerald-500" />
+                    <span>Created Projects</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {createdProjects.map((p, i) => (
+                      <div key={i} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{p.projectName}</p>
+                        <p className="text-xs text-slate-400 mt-1">{p.description || 'No description'}</p>
+                        <div className="flex items-center space-x-3 mt-2 text-[10px] text-slate-500 font-mono">
+                          <span>{p.region}</span>
+                          <span>·</span>
+                          <span>{p.teamSize} members</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* Right Column: Dashboard */}
@@ -461,6 +676,15 @@ export default function App() {
 
       {/* CHALO LIBRARIES UI */}
       <SmartDrawer />
+
+      {/* Create Project Modal (for product tour) */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateProject}
+        registerField={activeMission?.id === 'product-tour-create' ? registerTourField : undefined}
+        currentStepTarget={activeMission?.id === 'product-tour-create' ? currentStep?.targetField : undefined}
+      />
     </div>
   );
 }

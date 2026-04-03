@@ -10,6 +10,7 @@ const initialState: ChaloState = {
   fieldStates: {},
   missions: {},
   interactionHistory: [],
+  tourHistory: {},
   isPaused: false,
   isCompleted: false,
   error: null,
@@ -84,6 +85,20 @@ export const useChaloStore = create<ChaloStore>()(
         }));
       },
 
+      recordTourEntry: (missionId, stepId, completed) => {
+        set((state) => ({
+          tourHistory: {
+            ...state.tourHistory,
+            [missionId]: {
+              missionId,
+              lastStepId: stepId,
+              completed,
+              lastAccessed: Date.now(),
+            },
+          },
+        }));
+      },
+
       reset: () => set(initialState),
 
       setError: (error: string | null) => set({ error }),
@@ -96,6 +111,7 @@ export const useChaloStore = create<ChaloStore>()(
         currentStepId: state.currentStepId,
         fieldValues: state.fieldValues,
         interactionHistory: state.interactionHistory,
+        tourHistory: state.tourHistory,
         isPaused: state.isPaused,
         isCompleted: state.isCompleted,
       }),

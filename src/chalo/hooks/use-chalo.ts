@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useChaloStore } from '../store';
-import { MissionId, StepId } from '../types';
+import { MissionId, StepId, SuccessCondition } from '../types';
 import { UseFormReturn, RegisterOptions, FieldValues, Path, PathValue } from 'react-hook-form';
 
 export interface UseChaloOptions<TFieldValues extends FieldValues = FieldValues> {
@@ -32,6 +32,14 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const reset = useChaloStore(s => s.reset);
   const addInteraction = useChaloStore(s => s.addInteraction);
   const registerMission = useChaloStore(s => s.registerMission);
+  const recordTourEntry = useChaloStore(s => s.recordTourEntry);
+  const tourHistory = useChaloStore(s => s.tourHistory);
+
+  // Wrap startMission to record tour entry
+  const startMission = useCallback((missionId: MissionId) => {
+    recordTourEntry(missionId, '', false);
+    startMissionInStore(missionId);
+  }, [startMissionInStore, recordTourEntry]);
 
   const fieldErrors = useMemo(() => form?.formState.errors || {}, [form?.formState.errors]);
 
@@ -98,17 +106,39 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     return Math.round(((currentIndex + 1) / activeMission.steps.length) * 100);
   }, [activeMission, currentStepId]);
 
+  // Condition evaluator for successCondition / waitFor
+  const evaluateCondition = useCallback((condition?: SuccessCondition): boolean => {
+    if (!condition) return true;
+    switch (condition.type) {
+      case 'field_value':
+        if (!condition.field) return false;
+        return fieldValues[condition.field] === condition.value;
+      case 'field_touched':
+        if (!condition.field) return false;
+        return (fieldStates[condition.field] || 'idle') !== 'idle';
+      case 'custom':
+        if (condition.predicate) {
+          return condition.predicate(fieldValues, form?.getValues());
+        }
+        return false;
+      default:
+        return true;
+    }
+  }, [fieldValues, fieldStates, form]);
+
   // Methods
   const nextStep = useCallback(() => {
     if (!activeMission || !currentStepId) return;
     const steps = activeMission.steps;
     const currentIndex = steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex < steps.length - 1) {
+      recordTourEntry(activeMission.id, steps[currentIndex + 1].id, false);
       goToStep(steps[currentIndex + 1].id);
     } else {
+      recordTourEntry(activeMission.id, currentStepId, true);
       completeMission();
     }
-  }, [activeMission, currentStepId, goToStep, completeMission]);
+  }, [activeMission, currentStepId, goToStep, completeMission, recordTourEntry]);
 
   const prevStep = useCallback(() => {
     if (!activeMission || !currentStepId) return;
@@ -118,6 +148,26 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       goToStep(steps[currentIndex - 1].id);
     }
   }, [activeMission, currentStepId, goToStep]);
+
+  // Polling: check waitFor condition on current step and auto-advance when met
+  const waitForCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!currentStep?.waitFor) {
+      waitForCheckedRef.current = false;
+      return;
+    }
+    if (waitForCheckedRef.current) return;
+
+    const interval = setInterval(() => {
+      if (evaluateCondition(currentStep.waitFor)) {
+        waitForCheckedRef.current = true;
+        clearInterval(interval);
+        setTimeout(() => nextStep(), 600);
+      }
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [currentStep?.id, currentStep?.waitFor, evaluateCondition, nextStep]);
 
   const fillField = useCallback(
     (name: Path<TFieldValues>, value: PathValue<TFieldValues, Path<TFieldValues>>) => {
@@ -170,7 +220,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     fieldValues,
     fieldStates,
     interactionHistory,
-    startMission: startMissionInStore,
+    startMission,
     pauseMission: pauseMissionInStore,
     resumeMission: resumeMissionInStore,
     completeMission,
@@ -186,5 +236,8 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     prevStep,
     registerField,
     fillField,
+    recordTourEntry,
+    tourHistory,
+    evaluateCondition,
   };
 }

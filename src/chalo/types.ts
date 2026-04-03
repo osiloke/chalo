@@ -31,6 +31,7 @@ export interface Step {
   targetField?: string; // name of the form field
   targetElement?: string; // CSS selector for non-form elements
   successCondition?: SuccessCondition;
+  waitFor?: SuccessCondition; // If set, step waits until condition is met before allowing nextStep
   navigationRules?: {
     canGoBack?: boolean;
     canSkip?: boolean;
@@ -40,7 +41,7 @@ export interface Step {
 
 export interface StepAction {
   label: string;
-  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual';
+  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual' | 'trigger_action';
   data?: unknown;
   onClick?: () => void;
 }
@@ -58,6 +59,13 @@ export interface ChatInteraction {
   timestamp: number;
 }
 
+export interface TourEntry {
+  missionId: MissionId;
+  lastStepId: StepId;
+  completed: boolean;
+  lastAccessed: number;
+}
+
 export interface ChaloState {
   activeMissionId: MissionId | null;
   currentStepId: StepId | null;
@@ -66,6 +74,7 @@ export interface ChaloState {
   fieldStates: Record<string, 'idle' | 'focused' | 'valid' | 'invalid'>;
   missions: Record<string, Mission>;
   interactionHistory: ChatInteraction[];
+  tourHistory: Record<string, TourEntry>;
 
   isPaused: boolean;
   isCompleted: boolean;
@@ -83,6 +92,7 @@ export interface ChaloStore extends ChaloState {
   prevStep: () => void;
   updateField: (name: string, value: unknown, status?: ChaloState['fieldStates'][string]) => void;
   addInteraction: (stepId: string, actionText: string) => void;
+  recordTourEntry: (missionId: MissionId, stepId: StepId, completed: boolean) => void;
   reset: () => void;
   setError: (error: string | null) => void;
 }
