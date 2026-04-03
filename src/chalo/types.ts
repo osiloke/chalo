@@ -10,6 +10,7 @@ export interface Mission {
   steps: Step[];
   metadata?: Record<string, unknown>;
   onComplete?: () => void;
+  allowCompletion?: boolean; // If true, the mission can be marked as completed and stored
 }
 
 export type BubbleType = 'message' | 'input' | 'select' | 'action-group' | 'custom';
@@ -75,6 +76,7 @@ export interface ChaloState {
   missions: Record<string, Mission>;
   interactionHistory: ChatInteraction[];
   tourHistory: Record<string, TourEntry>;
+  completedMissions: MissionId[]; // Persisted list of completed mission IDs
 
   isPaused: boolean;
   isCompleted: boolean;
@@ -93,6 +95,7 @@ export interface ChaloStore extends ChaloState {
   updateField: (name: string, value: unknown, status?: ChaloState['fieldStates'][string]) => void;
   addInteraction: (stepId: string, actionText: string) => void;
   recordTourEntry: (missionId: MissionId, stepId: StepId, completed: boolean) => void;
+  markMissionCompleted: (missionId: MissionId) => void;
   dismissAllTours: () => void;
   resetMission: () => void;
   reset: () => void;

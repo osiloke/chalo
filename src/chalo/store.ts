@@ -11,6 +11,7 @@ const initialState: ChaloState = {
   missions: {},
   interactionHistory: [],
   tourHistory: {},
+  completedMissions: [],
   isPaused: false,
   isCompleted: false,
   error: null,
@@ -124,6 +125,21 @@ export const useChaloStore = create<ChaloStore>()(
         }));
       },
 
+      markMissionCompleted: (missionId) => {
+        const { missions } = get();
+        const mission = missions[missionId];
+        // Only allow marking if the mission explicitly allows completion
+        if (!mission?.allowCompletion) {
+          console.warn(`Mission "${missionId}" does not allow completion. Set allowCompletion: true on the mission.`);
+          return;
+        }
+        set((state) => ({
+          completedMissions: state.completedMissions.includes(missionId)
+            ? state.completedMissions
+            : [...state.completedMissions, missionId],
+        }));
+      },
+
       reset: () => set(initialState),
 
       setError: (error: string | null) => set({ error }),
@@ -137,6 +153,7 @@ export const useChaloStore = create<ChaloStore>()(
         fieldValues: state.fieldValues,
         interactionHistory: state.interactionHistory,
         tourHistory: state.tourHistory,
+        completedMissions: state.completedMissions,
         isPaused: state.isPaused,
         isCompleted: state.isCompleted,
       }),

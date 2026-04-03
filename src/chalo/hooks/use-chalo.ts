@@ -31,6 +31,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const goToStep = useChaloStore(s => s.goToStep);
   const reset = useChaloStore(s => s.reset);
   const resetMission = useChaloStore(s => s.resetMission);
+  const dismissAllTours = useChaloStore(s => s.dismissAllTours);
+  const markMissionCompleted = useChaloStore(s => s.markMissionCompleted);
+  const completedMissions = useChaloStore(s => s.completedMissions);
   const addInteraction = useChaloStore(s => s.addInteraction);
   const registerMission = useChaloStore(s => s.registerMission);
   const recordTourEntry = useChaloStore(s => s.recordTourEntry);
@@ -132,7 +135,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     if (onStepChange && currentStepId) {
       onStepChange(currentStepId);
     }
-  }, [currentStepId, currentStep, form, onStepChange]);
+  }, [currentStepId, currentStep, form, onStepChange, fieldValues]);
 
   // Handle mission completion
   useEffect(() => {
@@ -317,7 +320,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     goToStep,
     reset,
     resetMission,
-    dismissAllTours: useChaloStore(s => s.dismissAllTours),
+    dismissAllTours,
+    markMissionCompleted,
+    completedMissions,
     addInteraction,
     registerMission,
     activeMission,
