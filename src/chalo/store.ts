@@ -39,6 +39,8 @@ export const useChaloStore = create<ChaloStore>()(
           activeMissionId: mission.id,
           currentStepId: mission.steps[0]?.id || null,
           missionProgress: 0,
+          fieldValues: {},
+          fieldStates: {},
           interactionHistory: [],
           isPaused: false,
           isCompleted: false,

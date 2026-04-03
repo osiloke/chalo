@@ -36,13 +36,11 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const recordTourEntry = useChaloStore(s => s.recordTourEntry);
   const tourHistory = useChaloStore(s => s.tourHistory);
 
-  // Wrap startMission to reset mission state and record tour entry
+  // Wrap startMission to record tour entry
   const startMission = useCallback((missionId: MissionId) => {
-    // Reset mission-related state (fieldValues, fieldStates, interactions) but preserve the mission registry
-    resetMission();
     recordTourEntry(missionId, '', false);
     startMissionInStore(missionId);
-  }, [startMissionInStore, recordTourEntry, resetMission]);
+  }, [startMissionInStore, recordTourEntry]);
 
   const fieldErrors = useMemo(() => form?.formState.errors || {}, [form?.formState.errors]);
 
