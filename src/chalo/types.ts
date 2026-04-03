@@ -12,10 +12,22 @@ export interface Mission {
   onComplete?: () => void;
 }
 
+export type BubbleType = 'message' | 'input' | 'select' | 'action-group' | 'custom';
+
+export interface Bubble {
+  id: string;
+  type: BubbleType;
+  content?: string | ReactNode;
+  targetField?: string; // Linked field for input/select
+  options?: Array<{ label: string; value: unknown }>; // for select
+  actions?: StepAction[]; // for action-group
+}
+
 export interface Step {
   id: StepId;
   title: string;
   content: string | ReactNode;
+  bubbles?: Bubble[]; // Explicitly defined interactive bubbles
   targetField?: string; // name of the form field
   targetElement?: string; // CSS selector for non-form elements
   successCondition?: SuccessCondition;
@@ -28,7 +40,7 @@ export interface Step {
 
 export interface StepAction {
   label: string;
-  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field';
+  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual';
   data?: unknown;
   onClick?: () => void;
 }

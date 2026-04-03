@@ -44,19 +44,30 @@ const ONBOARDING_MISSION: Mission = {
     {
       id: 'profile-name',
       title: 'Define your ID',
-      content: 'Enter your full name in the "Full Name" field. This is how you will be recognized across the network.',
+      content: 'Enter your full name. This is how you will be recognized across the network.',
       targetField: 'fullName',
-      actions: [
-        { label: 'Fill for me (Jane Quantum)', type: 'fill_field', data: { field: 'fullName', value: 'Jane Quantum' } }
+      bubbles: [
+        { id: 'msg-1', type: 'message', content: 'You can type your name directly here in the guide, and it will sync to the form!' },
+        { id: 'inp-1', type: 'input', targetField: 'fullName' },
+        { 
+          id: 'act-1', type: 'action-group', actions: [
+            { label: 'Auto-fill: Jane Quantum', type: 'fill_field', data: { field: 'fullName', value: 'Jane Quantum' } }
+          ]
+        }
       ]
     },
     {
       id: 'workspace-tier',
       title: 'Select your tier',
-      content: 'Choose between "Standard" or "Enterprise" workspace tiers. Note that Enterprise unlocks advanced quantum encryption.',
+      content: 'Choose between "Standard" or "Enterprise" workspace tiers.',
       targetField: 'tier',
-      actions: [
-        { label: 'Set to Enterprise', type: 'fill_field', data: { field: 'tier', value: 'enterprise' } }
+      bubbles: [
+        { id: 'msg-2', type: 'message', content: 'Which tier suits your needs? Enterprise unlocks quantum encryption.' },
+        { id: 'sel-1', type: 'select', targetField: 'tier', options: [
+          { label: 'Standard Node', value: 'standard' },
+          { label: 'Enterprise Cluster', value: 'enterprise' }
+        ]},
+        { id: 'msg-3', type: 'message', content: 'Click "Send" in the guide below once you have selected your tier.' }
       ]
     },
     {
@@ -68,7 +79,7 @@ const ONBOARDING_MISSION: Mission = {
     {
       id: 'complete-onboarding',
       title: 'Mission Success!',
-      content: 'Your workspace is ready. You have successfully initialized your Chalo Cloud node. You can now access all features.',
+      content: 'Your workspace is ready. You have successfully initialized your Chalo Cloud node.',
     }
   ]
 };
@@ -81,17 +92,17 @@ const DASHBOARD_TUTORIAL: Mission = {
     {
       id: 'kpi-cards',
       title: 'Key Performance Indicators',
-      content: 'These top cards give a snapshot of system health. You triggered this by exploring the dashboard! Feel free to keep hovering.',
+      content: 'These top cards give a snapshot of system health. You triggered this by exploring the dashboard!',
     },
     {
       id: 'chart-filter',
       title: 'Interactive Filters',
-      content: 'You can change how data is displayed. Try clicking on "Snapshots" right now to switch the dataset!',
+      content: 'You can change how data is displayed. Try clicking on "Snapshots" right now!',
     },
     {
       id: 'chart-overview',
       title: 'Quantum Analytics',
-      content: 'This chart displays your data throughput based on your filter selection. It updates smoothly without breaking your tutorial.',
+      content: 'This chart displays your data throughput based on your filter selection.',
     },
     {
       id: 'activity-stream',
