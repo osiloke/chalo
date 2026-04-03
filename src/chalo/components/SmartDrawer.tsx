@@ -5,7 +5,7 @@ import { useChalo } from '../hooks/use-chalo';
 import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Bubble as BubbleType, StepAction, ActionResult } from '../types';
+import { Bubble as BubbleType, StepAction, ActionResult, Action } from '../types';
 import { TargetHighlight } from './TargetHighlight';
 
 function cn(...inputs: ClassValue[]) {
@@ -94,7 +94,7 @@ const ActionGroupBubble = ({
   </div>
 );
 
-const ActionStatusBubble = ({ result }: { result: ActionResult }) => {
+const ActionStatusBubble = ({ action, result }: { action: Action; result: ActionResult }) => {
   const statusConfig = {
     running: { icon: Loader2, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', label: 'Executing...' },
     success: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', label: 'Completed' },
@@ -105,13 +105,19 @@ const ActionStatusBubble = ({ result }: { result: ActionResult }) => {
   };
   const cfg = statusConfig[result.status];
   const Icon = cfg.icon;
+  const actionLabel = action.label || action.type;
 
   return (
-    <div className={cn("flex items-center space-x-3 px-4 py-2.5 rounded-xl border text-sm", cfg.bg, cfg.border)}>
-      <Icon size={16} className={cn(cfg.color, result.status === 'running' && 'animate-spin')} />
-      <span className={cn("font-medium", cfg.color)}>{cfg.label}</span>
-      {result.error && <span className="text-xs text-rose-400 ml-2">{result.error}</span>}
-      {result.attempts > 1 && <span className="text-xs text-slate-400 ml-1">({result.attempts} attempts)</span>}
+    <div className={cn("flex flex-col space-y-1 px-4 py-2.5 rounded-xl border text-sm", cfg.bg, cfg.border)}>
+      <div className="flex items-center space-x-3">
+        <Icon size={16} className={cn(cfg.color, result.status === 'running' && 'animate-spin')} />
+        <span className={cn("font-medium", cfg.color)}>{actionLabel}</span>
+      </div>
+      <div className="flex items-center space-x-2 ml-7">
+        <span className="text-xs text-slate-400">{cfg.label}</span>
+        {result.error && <span className="text-xs text-rose-400">· {result.error}</span>}
+        {result.attempts > 1 && <span className="text-xs text-slate-400">· ({result.attempts} attempts)</span>}
+      </div>
     </div>
   );
 };
@@ -406,7 +412,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                         if (!result) return null;
                         return (
                           <div key={action.id} className="flex justify-start w-full">
-                            <ActionStatusBubble result={result} />
+                            <ActionStatusBubble action={action} result={result} />
                           </div>
                         );
                       })}

@@ -33,10 +33,18 @@ const scrollHandler: ActionHandler = async (config: ActionConfig) => {
     const el = document.querySelector<HTMLElement>(selector);
     if (!el) throw new Error(`Element not found: ${selector}`);
     el.scrollIntoView({ behavior, block: 'center' });
+    // Brief highlight to show the target was found
+    el.style.transition = 'outline 0.2s';
+    el.style.outline = '3px solid rgba(99, 102, 241, 0.6)';
+    el.style.outlineOffset = '4px';
+    setTimeout(() => {
+      el.style.outline = 'none';
+    }, 2000);
+    return { scrolled: selector };
   } else {
     window.scrollTo({ top: document.body.scrollHeight, behavior });
+    return { scrolled: 'bottom' };
   }
-  return { scrolled: selector ?? 'bottom' };
 };
 
 const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: ExecutionContext) => {
