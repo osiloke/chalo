@@ -8,18 +8,18 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w apps/demo",
-    "build:chalo": "npm run build -w packages/chalo",
-    "build:demo": "npm run build -w apps/demo",
-    "build": "npm run build:chalo && npm run build:demo",
-    "test": "npm run test -w packages/chalo",
-    "test:ui": "npm run test:ui -w packages/chalo",
-    "coverage": "npm run coverage -w packages/chalo",
-    "lint": "npm run lint -w packages/chalo",
-    "lint:fix": "npm run lint:fix -w packages/chalo",
-    "format": "npm run format -w packages/chalo",
-    "format:fix": "npm run format:fix -w packages/chalo",
-    "publish:chalo": "npm publish -w packages/chalo"
+    "dev": "pnpm --filter chalo-demo dev",
+    "build:chalo": "pnpm --filter chalo build",
+    "build:demo": "pnpm --filter chalo-demo build",
+    "build": "pnpm build:chalo && pnpm build:demo",
+    "test": "pnpm --filter chalo test",
+    "test:ui": "pnpm --filter chalo test:ui",
+    "coverage": "pnpm --filter chalo coverage",
+    "lint": "pnpm --filter chalo lint",
+    "lint:fix": "pnpm --filter chalo lint:fix",
+    "format": "pnpm --filter chalo format",
+    "format:fix": "pnpm --filter chalo format:fix",
+    "publish:chalo": "pnpm --filter chalo publish"
   },
   "devDependencies": {
     "typescript": "^6.0.2"
