@@ -230,11 +230,11 @@ const PRODUCT_TOUR_MISSION: Mission = {
       bubbles: [
         {
           id: 'act-submit', type: 'action-group', actions: [
-            { label: 'Submit for me', type: 'click', data: { selector: 'button[type="submit"]' } },
+            { label: 'Submit for me', type: 'click', data: { field: 'submit-btn' } },
           ],
         },
       ],
-      waitFor: { type: 'field_touched', field: 'submit_btn' },
+      waitFor: { type: 'custom', predicate: () => !document.querySelector('[data-chalo-field="submit-btn"]') },
     },
     {
       id: 'tour-complete',

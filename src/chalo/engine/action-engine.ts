@@ -20,11 +20,16 @@ import {
 // --- BUILT-IN ACTION HANDLERS ---
 
 const clickHandler: ActionHandler = async (config: ActionConfig) => {
-  const { selector } = config as ClickActionConfig;
-  const el = document.querySelector<HTMLElement>(selector);
-  if (!el) throw new Error(`Element not found: ${selector}`);
-  el.click();
-  return { clicked: selector };
+  const clickConfig = config as ClickActionConfig;
+  // Prefer named field resolution (mirrors fill_field pattern)
+  const targetSelector = clickConfig.field
+    ? `[data-chalo-field="${clickConfig.field}"], #chalo-${clickConfig.field}`
+    : clickConfig.selector;
+  if (!targetSelector) throw new Error('Click action requires either "field" or "selector".');
+  const el = document.querySelector(targetSelector);
+  if (!el) throw new Error(`Element not found: ${targetSelector}`);
+  (el as HTMLElement).click();
+  return { clicked: targetSelector };
 };
 
 const scrollHandler: ActionHandler = async (config: ActionConfig) => {

@@ -40,7 +40,7 @@ export function CreateProjectModal({
   });
 
   // Connect modal form to Chalo for bidirectional sync + field registration
-  const { registerField } = useChalo({ form });
+  const { registerField, registerElement } = useChalo({ form });
 
   // Close on Escape
   useEffect(() => {
@@ -191,6 +191,7 @@ export function CreateProjectModal({
                     </button>
                     <button
                       type="submit"
+                      ref={registerElement('submit-btn')}
                       className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all flex items-center justify-center space-x-2"
                     >
                       <CheckCircle2 size={18} />

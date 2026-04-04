@@ -455,6 +455,17 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     [form, _updateFieldInStore, fieldValues, log]
   );
 
+  // registerElement: attribute a ref callback that sets data-chalo-field on any
+  // DOM element (buttons, links, etc.) so action engine can target it by name.
+  const registerElement = useCallback((name: string) => {
+    return (el: HTMLElement | null) => {
+      if (el) {
+        el.setAttribute('data-chalo-field', name);
+        el.id = el.id || `chalo-${name}`;
+      }
+    };
+  }, []);
+
   return {
     activeMissionId,
     currentStepId,
@@ -488,6 +499,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     nextStep,
     prevStep,
     registerField,
+    registerElement,
     fillField,
     recordTourEntry,
     tourHistory,

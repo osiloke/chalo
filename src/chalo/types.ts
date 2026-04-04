@@ -29,7 +29,10 @@ export interface RollbackConfig {
 
 // Type-specific action configs
 export interface ClickActionConfig {
-  selector: string;
+  /** CSS selector to find the element */
+  selector?: string;
+  /** Named element registered via `registerElement` (preferred over `selector`) */
+  field?: string;
 }
 
 export interface ScrollActionConfig {
