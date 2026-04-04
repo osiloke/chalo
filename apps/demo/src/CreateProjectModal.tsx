@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Globe, Users, FileText, Hash, CheckCircle2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { useChalo } from './chalo/hooks/use-chalo';
+import { useChalo } from 'chalo';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
