@@ -31,11 +31,11 @@
     "framer-motion",
     "guided-experience"
   ],
-  "author": "Your Name",
+  "author": "Osiloke Harold Emoekpere",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/chalo.git",
+    "url": "https://github.com/osiloke/chalo.git",
     "directory": "packages/chalo"
   },
   "peerDependencies": {
