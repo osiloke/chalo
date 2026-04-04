@@ -283,7 +283,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const fillField = useCallback(
     (name: string, value: unknown) => {
       formUpdatedRef.current.add(name);
-      updateFieldInStore(name, value);
+      updateFieldInStore(name, value, 'valid');
       if (form) {
         try {
           form.setValue(name as Path<TFieldValues>, value as PathValue<TFieldValues, Path<TFieldValues>>, {
@@ -392,6 +392,7 @@ export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues
   enabled = true,
 ) {
   const fieldValues = useChaloStore(s => s.fieldValues);
+  const fieldStates = useChaloStore(s => s.fieldStates);
   const updateFieldInStore = useChaloStore(s => s.updateField);
   const formUpdatedRef = useRef<Set<string>>(new Set());
   const prevFieldValuesRef = useRef<Record<string, unknown>>({});
@@ -402,11 +403,11 @@ export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues
     const subscription = form.watch((value, { name }) => {
       if (name) {
         formUpdatedRef.current.add(name);
-        updateFieldInStore(name, value[name]);
+        updateFieldInStore(name, value[name], 'valid');
       } else {
         Object.entries(value).forEach(([n, v]) => {
           formUpdatedRef.current.add(n);
-          updateFieldInStore(n, v);
+          updateFieldInStore(n, v, 'valid');
         });
       }
     });
@@ -433,8 +434,13 @@ export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues
         } catch {
           // Field may not be registered
         }
+        // Re-propagate the field state from store to avoid downgrade
+        const currentState = fieldStates[name];
+        if (currentState && currentState !== 'idle') {
+          updateFieldInStore(name, storeVal, currentState);
+        }
         prevFieldValuesRef.current[name] = storeVal;
       }
     });
-  }, [fieldValues, form, enabled]);
+  }, [fieldValues, fieldStates, form, enabled, updateFieldInStore]);
 }
