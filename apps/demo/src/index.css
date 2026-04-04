@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@source "../../../packages/chalo/src";
+
 @theme {
   --color-brand-primary: #6366f1;
   --color-brand-secondary: #f43f5e;
