@@ -22,6 +22,12 @@ build/
 *.swo
 *~
 
+# AI/Assistant cache
+.qwen/
+
+# Symlinks/Artifacts
+product_designer
+
 # OS
 .DS_Store
 Thumbs.db
