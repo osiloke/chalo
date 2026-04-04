@@ -23,14 +23,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "packages/**/*.ts",
-    "packages/**/*.tsx",
-    "apps/**/*.ts",
-    "apps/**/*.tsx"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
+    "src"
   ]
 }
