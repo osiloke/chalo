@@ -142,6 +142,7 @@ export interface Step {
   targetElement?: string; // CSS selector for non-form elements
   successCondition?: SuccessCondition;
   waitFor?: SuccessCondition; // If set, step waits until condition is met before allowing nextStep
+  condition?: SuccessCondition; // Gates auto-execution of actionSequence; if not met, sequence is skipped
   navigationRules?: {
     canGoBack?: boolean;
     canSkip?: boolean;

@@ -157,14 +157,6 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     executedSequenceRef.current.clear();
   }, [activeMissionId]);
 
-  useEffect(() => {
-    if (!currentStep?.actionSequence || !currentStepId) return;
-    if (executedSequenceRef.current.has(currentStepId)) return;
-
-    executedSequenceRef.current.add(currentStepId);
-    executeActionSequence(currentStep.actionSequence, currentStepId);
-  }, [currentStepId, currentStep?.actionSequence, executeActionSequence]);
-
   // Handle mission completion
   useEffect(() => {
     if (isCompleted && activeMissionId && onMissionComplete) {
@@ -224,6 +216,18 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       goToStep(steps[currentIndex - 1].id);
     }
   }, [activeMission, currentStepId, goToStep]);
+
+  // Auto-execute action sequence when step changes and has actions
+  useEffect(() => {
+    if (!currentStep?.actionSequence || !currentStepId) return;
+    if (executedSequenceRef.current.has(currentStepId)) return;
+
+    // Check step-level condition: only auto-execute if condition is met (or not set)
+    if (currentStep.condition && !evaluateCondition(currentStep.condition)) return;
+
+    executedSequenceRef.current.add(currentStepId);
+    executeActionSequence(currentStep.actionSequence, currentStepId);
+  }, [currentStepId, currentStep?.actionSequence, currentStep?.condition, executeActionSequence, evaluateCondition]);
 
   // Polling: check waitFor condition on current step and auto-advance when met
   // Per-step tracking: use a Set so consecutive steps with waitFor don't interfere

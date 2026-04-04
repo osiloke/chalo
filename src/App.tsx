@@ -126,6 +126,7 @@ const PRODUCT_TOUR_MISSION: Mission = {
   id: 'product-tour-create',
   title: 'Create Your First Project',
   description: 'A guided walkthrough of the project creation flow.',
+  allowCompletion: true,
   steps: [
     {
       id: 'tour-intro',
@@ -136,18 +137,24 @@ const PRODUCT_TOUR_MISSION: Mission = {
     {
       id: 'find-create-btn',
       title: 'Find the Create Button',
-      content: 'Look for the "Create Project" button in the Mission Center. Go ahead and click it — the form will open in a modal.',
+      content: 'Look for the "Create Project" button in the Mission Center. I\'ll click it for you to open the creation form.',
       targetElement: '#btn-create-project',
+      condition: {
+        type: 'custom',
+        predicate: () => !document.querySelector('[role="dialog"]'),
+      },
+      actionSequence: [
+        {
+          id: 'click-create',
+          type: 'click',
+          config: { selector: '#btn-create-project' },
+          label: 'Open create modal',
+        },
+      ],
       waitFor: {
         type: 'custom',
-        predicate: () => {
-          const el = document.querySelector('#btn-create-project');
-          return el?.getAttribute('data-clicked') === 'true';
-        },
+        predicate: () => !!document.querySelector('[role="dialog"]'),
       },
-      bubbles: [
-        { id: 'msg-create-1', type: 'message', content: 'Click the highlighted button below to open the creation form.' },
-      ],
     },
     {
       id: 'modal-opened',
@@ -165,14 +172,14 @@ const PRODUCT_TOUR_MISSION: Mission = {
     {
       id: 'fill-project-name',
       title: 'Project Name',
-      content: 'Every project needs a unique name. You can type it in the modal form, or use the auto-fill below.',
+      content: 'Every project needs a unique name. I\'ll auto-fill one for you.',
       targetField: 'projectName',
-      bubbles: [
-        { id: 'msg-name', type: 'message', content: 'Type a name in the modal, or let me fill one for you!' },
+      actionSequence: [
         {
-          id: 'act-name', type: 'action-group', actions: [
-            { label: 'Auto-fill: Project Nebula', type: 'fill_field', data: { field: 'projectName', value: 'Project Nebula' } },
-          ],
+          id: 'fill-name',
+          type: 'fill_field',
+          config: { field: 'projectName', value: 'Project Nebula' },
+          label: 'Auto-fill: Project Nebula',
         },
       ],
       waitFor: {
@@ -186,36 +193,50 @@ const PRODUCT_TOUR_MISSION: Mission = {
       title: 'Choose a Region',
       content: 'Select the deployment region closest to your users. This affects latency and compliance.',
       targetField: 'region',
-      bubbles: [
-        { id: 'msg-region', type: 'message', content: 'Pick a region from the dropdown in the modal.' },
+      actionSequence: [
         {
-          id: 'act-region', type: 'action-group', actions: [
-            { label: 'Auto-fill: EU (Ireland)', type: 'fill_field', data: { field: 'region', value: 'eu-west-1' } },
-          ],
+          id: 'fill-region',
+          type: 'fill_field',
+          config: { field: 'region', value: 'eu-west-1' },
+          label: 'Auto-fill: EU (Ireland)',
         },
       ],
+      waitFor: {
+        type: 'field_value',
+        field: 'region',
+        value: 'eu-west-1',
+      },
     },
     {
       id: 'fill-team-size',
       title: 'Set Team Size',
-      content: 'How many collaborators will join this project? Enter a number in the modal.',
+      content: 'How many collaborators will join this project?',
       targetField: 'teamSize',
-      bubbles: [
-        { id: 'msg-team', type: 'message', content: 'Enter your team size in the modal form.' },
+      actionSequence: [
         {
-          id: 'act-team', type: 'action-group', actions: [
-            { label: 'Auto-fill: 5', type: 'fill_field', data: { field: 'teamSize', value: 5 } },
-          ],
+          id: 'fill-team',
+          type: 'fill_field',
+          config: { field: 'teamSize', value: 5 },
+          label: 'Auto-fill: 5',
         },
       ],
+      waitFor: {
+        type: 'field_value',
+        field: 'teamSize',
+        value: 5,
+      },
     },
     {
       id: 'submit-project',
       title: 'Submit the Form',
-      content: 'Click "Create Project" in the modal to submit. All your values will be validated and the project will be created.',
-      targetField: 'submit_btn',
-      bubbles: [
-        { id: 'msg-submit', type: 'message', content: 'Hit the "Create Project" button in the modal when you\'re ready!' },
+      content: 'I\'ll submit the form for you. All your values will be validated and the project will be created.',
+      actionSequence: [
+        {
+          id: 'submit-click',
+          type: 'click',
+          config: { selector: 'button[type="submit"]' },
+          label: 'Submit form',
+        },
       ],
     },
     {
@@ -223,8 +244,8 @@ const PRODUCT_TOUR_MISSION: Mission = {
       title: 'Tour Complete! 🎉',
       content: 'You\'ve successfully walked through the project creation flow. You can now create projects on your own. Feel free to explore other features!',
     },
-  ]
-};
+  ],
+};;
 
 // Action sequence for the action engine demo
 const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
