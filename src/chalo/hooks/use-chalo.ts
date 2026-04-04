@@ -431,7 +431,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
           id: fieldId,
           name,
           'data-chalo-field': String(name),
-          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
             _updateFieldInStore(name, e.target.value),
           onFocus: () => _updateFieldInStore(name, fieldValues[name], 'focused'),
           onBlur: () => _updateFieldInStore(name, fieldValues[name], 'idle'),
@@ -493,75 +493,4 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     tourHistory,
     evaluateCondition,
   };
-}
-
-/**
- * Bidirectional sync hook for secondary forms (e.g., modal forms).
- * Call this in any component that has a `useForm` instance and wants
- * its fields to stay in sync with the Chalo store.
- */
-export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues>(
-  form: UseFormReturn<TFieldValues>,
-  enabled = true,
-) {
-  const fieldValues = useChaloStore(s => s.fieldValues);
-  const updateFieldInStore = useChaloStore(s => s.updateField);
-  const formUpdatedRef = useRef<Set<string>>(new Set());
-  const prevFieldValuesRef = useRef<Record<string, unknown>>({});
-
-  // Initialize prevFieldValuesRef with form's current values on mount
-  // so default values don't trigger false "form updated" flags
-  useEffect(() => {
-    const vals = form.getValues();
-    prevFieldValuesRef.current = { ...vals };
-  }, [form]);
-
-  // Direction 1: Form → Store
-  useEffect(() => {
-    if (!enabled) return;
-    const subscription = form.watch((value, { name }) => {
-      if (name) {
-        const newVal = value[name];
-        if (prevFieldValuesRef.current[name] !== newVal) {
-          formUpdatedRef.current.add(name);
-          prevFieldValuesRef.current[name] = newVal;
-          updateFieldInStore(name, newVal, 'valid');
-        }
-      } else {
-        Object.entries(value).forEach(([n, v]) => {
-          if (prevFieldValuesRef.current[n] !== v) {
-            formUpdatedRef.current.add(n);
-            prevFieldValuesRef.current[n] = v;
-            updateFieldInStore(n, v, 'valid');
-          }
-        });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, updateFieldInStore, enabled]);
-
-  // Direction 2: Store → Form
-  useEffect(() => {
-    if (!enabled) return;
-    Object.entries(fieldValues).forEach(([name, storeVal]) => {
-      if (formUpdatedRef.current.has(name)) {
-        formUpdatedRef.current.delete(name);
-        prevFieldValuesRef.current[name] = storeVal;
-        return;
-      }
-      const prevVal = prevFieldValuesRef.current[name];
-      if (prevVal !== storeVal) {
-        try {
-          form.setValue(name as Path<TFieldValues>, storeVal as PathValue<TFieldValues, Path<TFieldValues>>, {
-            shouldValidate: true,
-            shouldDirty: true,
-            shouldTouch: true,
-          });
-        } catch {
-          // Field may not be registered
-        }
-        prevFieldValuesRef.current[name] = storeVal;
-      }
-    });
-  }, [fieldValues, form, enabled]);
 }

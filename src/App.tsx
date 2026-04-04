@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import {
   SmartDrawer,
   useChalo,
-  useChaloFieldSync,
   Mission,
   Action,
 } from './chalo';
@@ -343,16 +342,6 @@ export default function App() {
     }
   });
 
-  // Product tour modal form (separate from onboarding form)
-  const tourForm = useForm<CreateProjectFormData>({
-    defaultValues: {
-      projectName: '',
-      description: '',
-      region: 'us-east-1',
-      teamSize: 1,
-    },
-  });
-
   const [dataType, setDataType] = useState<'realtime' | 'snapshots'>('realtime');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createdProjects, setCreatedProjects] = useState<CreateProjectFormData[]>([]);
@@ -391,9 +380,6 @@ export default function App() {
       nextStep();
     }
   };
-
-  // Bidirectional sync for the modal form (encapsulated in hook)
-  useChaloFieldSync(tourForm, activeMission?.id === 'product-tour-create');
 
   const handleCreateProjectClick = () => {
     setIsCreateModalOpen(true);

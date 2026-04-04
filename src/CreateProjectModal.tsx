@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Globe, Users, FileText, Hash, CheckCircle2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useChalo } from './chalo/hooks/use-chalo';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,6 +39,9 @@ export function CreateProjectModal({
     },
   });
 
+  // Connect modal form to Chalo for bidirectional sync + field registration
+  const { registerField } = useChalo({ form });
+
   // Close on Escape
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -51,10 +55,6 @@ export function CreateProjectModal({
     onSubmit(data);
     onClose();
   });
-
-  const field = (name: keyof CreateProjectFormData) => {
-    return form.register(name, name === 'projectName' ? { required: true } : undefined);
-  };
 
   const isHighlighted = (fieldName: string) => currentStepTarget === fieldName;
 
@@ -112,7 +112,7 @@ export function CreateProjectModal({
                       <span>Project Name</span>
                     </label>
                     <input
-                      {...field('projectName')}
+                      {...registerField('projectName', { required: true })}
                       placeholder="e.g. Project Nebula"
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-slate-900 dark:text-white"
                     />
@@ -131,7 +131,7 @@ export function CreateProjectModal({
                       <span>Description</span>
                     </label>
                     <textarea
-                      {...field('description')}
+                      {...registerField('description')}
                       rows={3}
                       placeholder="Brief description of your project..."
                       className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-slate-900 dark:text-white resize-none"
@@ -149,7 +149,7 @@ export function CreateProjectModal({
                         <span>Region</span>
                       </label>
                       <select
-                        {...field('region')}
+                        {...registerField('region')}
                         className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-slate-900 dark:text-white appearance-none"
                       >
                         <option value="us-east-1">US East (N. Virginia)</option>
@@ -168,7 +168,7 @@ export function CreateProjectModal({
                         <span>Team Size</span>
                       </label>
                       <input
-                        {...field('teamSize')}
+                        {...registerField('teamSize')}
                         type="number"
                         min={1}
                         max={100}
