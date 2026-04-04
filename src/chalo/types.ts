@@ -153,7 +153,7 @@ export interface Step {
 
 export interface StepAction {
   label: string;
-  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual' | 'trigger_action';
+  type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual' | 'trigger_action' | 'click';
   data?: unknown;
   onClick?: () => void;
 }

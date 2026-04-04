@@ -172,6 +172,10 @@ const BubbleRenderer = ({
               const d = a.data as { field: string; value: unknown };
               onFill(d.field, d.value);
               onInteraction(`Auto-filled ${d.field} with ${d.value}`);
+            } else if (a.type === 'click' && a.data) {
+              const d = a.data as { selector: string };
+              const el = document.querySelector(d.selector);
+              if (el) { (el as HTMLElement).click(); onInteraction(`Clicked: ${d.selector}`); }
             } else if (a.onClick) {
               a.onClick();
               onInteraction(`Performed action: ${a.label}`);
@@ -396,6 +400,10 @@ export function SmartDrawer({ className }: { className?: string }) {
                             const d = a.data as { field: string; value: unknown };
                             fillField(d.field, d.value);
                             store.addInteraction(currentStep.id, `Used auto-fill: ${d.value}`);
+                          } else if (a.type === 'click' && a.data) {
+                            const d = a.data as { selector: string };
+                            const el = document.querySelector(d.selector);
+                            if (el) { (el as HTMLElement).click(); store.addInteraction(currentStep.id, `Clicked: ${d.selector}`); }
                           } else if (a.onClick) {
                             a.onClick();
                             store.addInteraction(currentStep.id, `Selected: ${a.label}`);

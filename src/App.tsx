@@ -172,72 +172,57 @@ const PRODUCT_TOUR_MISSION: Mission = {
     {
       id: 'fill-project-name',
       title: 'Project Name',
-      content: 'Every project needs a unique name. I\'ll auto-fill one for you.',
+      content: 'Every project needs a unique name. Type it in the modal, or use auto-fill below.',
       targetField: 'projectName',
-      actionSequence: [
+      bubbles: [
         {
-          id: 'fill-name',
-          type: 'fill_field',
-          config: { field: 'projectName', value: 'Project Nebula' },
-          label: 'Auto-fill: Project Nebula',
+          id: 'act-name', type: 'action-group', actions: [
+            { label: 'Auto-fill: Project Nebula', type: 'fill_field', data: { field: 'projectName', value: 'Project Nebula' } },
+          ],
         },
       ],
-      waitFor: {
-        type: 'field_value',
-        field: 'projectName',
-        value: 'Project Nebula',
-      },
+      waitFor: { type: 'field_touched', field: 'projectName' },
     },
     {
       id: 'fill-region',
       title: 'Choose a Region',
-      content: 'Select the deployment region closest to your users. This affects latency and compliance.',
+      content: 'Select the deployment region closest to your users. Pick one in the modal, or use auto-fill below.',
       targetField: 'region',
-      actionSequence: [
+      bubbles: [
         {
-          id: 'fill-region',
-          type: 'fill_field',
-          config: { field: 'region', value: 'eu-west-1' },
-          label: 'Auto-fill: EU (Ireland)',
+          id: 'act-region', type: 'action-group', actions: [
+            { label: 'Auto-fill: EU (Ireland)', type: 'fill_field', data: { field: 'region', value: 'eu-west-1' } },
+          ],
         },
       ],
-      waitFor: {
-        type: 'field_value',
-        field: 'region',
-        value: 'eu-west-1',
-      },
+      waitFor: { type: 'field_touched', field: 'region' },
     },
     {
       id: 'fill-team-size',
       title: 'Set Team Size',
-      content: 'How many collaborators will join this project?',
+      content: 'How many collaborators will join this project? Enter a number in the modal, or use auto-fill below.',
       targetField: 'teamSize',
-      actionSequence: [
+      bubbles: [
         {
-          id: 'fill-team',
-          type: 'fill_field',
-          config: { field: 'teamSize', value: 5 },
-          label: 'Auto-fill: 5',
+          id: 'act-team', type: 'action-group', actions: [
+            { label: 'Auto-fill: 5', type: 'fill_field', data: { field: 'teamSize', value: 5 } },
+          ],
         },
       ],
-      waitFor: {
-        type: 'field_value',
-        field: 'teamSize',
-        value: 5,
-      },
+      waitFor: { type: 'field_touched', field: 'teamSize' },
     },
     {
       id: 'submit-project',
       title: 'Submit the Form',
-      content: 'I\'ll submit the form for you. All your values will be validated and the project will be created.',
-      actionSequence: [
+      content: 'Click "Create Project" in the modal to submit. Or I can do it for you.',
+      bubbles: [
         {
-          id: 'submit-click',
-          type: 'click',
-          config: { selector: 'button[type="submit"]' },
-          label: 'Submit form',
+          id: 'act-submit', type: 'action-group', actions: [
+            { label: 'Submit for me', type: 'click', data: { selector: 'button[type="submit"]' } },
+          ],
         },
       ],
+      waitFor: { type: 'field_touched', field: 'submit_btn' },
     },
     {
       id: 'tour-complete',
@@ -245,7 +230,7 @@ const PRODUCT_TOUR_MISSION: Mission = {
       content: 'You\'ve successfully walked through the project creation flow. You can now create projects on your own. Feel free to explore other features!',
     },
   ],
-};;
+};
 
 // Action sequence for the action engine demo
 const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
