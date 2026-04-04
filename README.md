@@ -1,4 +1,7 @@
 # chalo
+<p align="center">
+  <img src="./apps/demo/src/assets/logo.svg" alt="Chalo Logo" width="120" />
+</p>
 
 [![npm version](https://img.shields.io/npm/v/chalo.svg?style=flat-square)](https://www.npmjs.com/package/chalo)
 [![npm downloads](https://img.shields.io/npm/dm/chalo.svg?style=flat-square)](https://www.npmjs.com/package/chalo)
