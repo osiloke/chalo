@@ -7,10 +7,36 @@ export interface UseChaloOptions<TFieldValues extends FieldValues = FieldValues>
   form?: UseFormReturn<TFieldValues>;
   onMissionComplete?: (missionId: MissionId) => void;
   onStepChange?: (stepId: StepId) => void;
+  /** Enable debug logging to console. Default: false. */
+  debug?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Debug logger factory – creates a no-op logger when debug is disabled so
+// there is zero runtime cost in production / non-debug mode.
+// ---------------------------------------------------------------------------
+type DebugLogFn = (actionName: string, payload?: Record<string, unknown>) => void;
+
+function createDebugLogger(debugEnabled: boolean): DebugLogFn {
+  if (!debugEnabled) {
+    // No-op: the JS engine will inline and eliminate calls to this function.
+    return () => { };
+  }
+
+  return (actionName: string, payload?: Record<string, unknown>) => {
+    console.debug(
+      `%c[use-chalo] %c${actionName}`,
+      'color: #8b5cf6; font-weight: bold;',
+      'color: #a78bfa;',
+      payload !== undefined ? payload : '',
+    );
+  };
 }
 
 export function useChalo<TFieldValues extends FieldValues = FieldValues>(options: UseChaloOptions<TFieldValues> = {}) {
-  const { form, onMissionComplete, onStepChange } = options;
+  const { form, onMissionComplete, onStepChange, debug = false } = options;
+
+  const log = useMemo(() => createDebugLogger(debug), [debug]);
 
   // Use specific selectors for better stability
   const activeMissionId = useChaloStore(s => s.activeMissionId);
@@ -22,33 +48,115 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   const fieldStates = useChaloStore(s => s.fieldStates);
   const interactionHistory = useChaloStore(s => s.interactionHistory);
 
-  // Actions
-  const updateFieldInStore = useChaloStore(s => s.updateField);
-  const startMissionInStore = useChaloStore(s => s.startMission);
-  const pauseMissionInStore = useChaloStore(s => s.pauseMission);
-  const resumeMissionInStore = useChaloStore(s => s.resumeMission);
-  const completeMission = useChaloStore(s => s.completeMission);
-  const goToStep = useChaloStore(s => s.goToStep);
-  const reset = useChaloStore(s => s.reset);
-  const resetMission = useChaloStore(s => s.resetMission);
-  const dismissAllTours = useChaloStore(s => s.dismissAllTours);
-  const markMissionCompleted = useChaloStore(s => s.markMissionCompleted);
+  // Actions (wrapped with debug logging)
+  const _updateFieldInStore = useChaloStore(s => s.updateField);
+  const updateFieldInStore = useCallback<typeof _updateFieldInStore>((name, value, status) => {
+    log('updateField', { name, status });
+    _updateFieldInStore(name, value, status);
+  }, [_updateFieldInStore, log]);
+
+  const _startMissionInStore = useChaloStore(s => s.startMission);
+  const _pauseMissionInStore = useChaloStore(s => s.pauseMission);
+  const pauseMissionInStore = useCallback<typeof _pauseMissionInStore>(() => {
+    log('pauseMission');
+    _pauseMissionInStore();
+  }, [_pauseMissionInStore, log]);
+
+  const _resumeMissionInStore = useChaloStore(s => s.resumeMission);
+  const resumeMissionInStore = useCallback<typeof _resumeMissionInStore>(() => {
+    log('resumeMission');
+    _resumeMissionInStore();
+  }, [_resumeMissionInStore, log]);
+
+  const _completeMission = useChaloStore(s => s.completeMission);
+  const completeMission = useCallback<typeof _completeMission>(() => {
+    log('completeMission');
+    _completeMission();
+  }, [_completeMission, log]);
+
+  const _goToStep = useChaloStore(s => s.goToStep);
+  const goToStep = useCallback<typeof _goToStep>((stepId) => {
+    log('goToStep', { stepId });
+    _goToStep(stepId);
+  }, [_goToStep, log]);
+
+  const _reset = useChaloStore(s => s.reset);
+  const reset = useCallback<typeof _reset>(() => {
+    log('reset');
+    _reset();
+  }, [_reset, log]);
+
+  const _resetMission = useChaloStore(s => s.resetMission);
+  const resetMission = useCallback<typeof _resetMission>(() => {
+    log('resetMission');
+    _resetMission();
+  }, [_resetMission, log]);
+
+  const _dismissAllTours = useChaloStore(s => s.dismissAllTours);
+  const dismissAllTours = useCallback<typeof _dismissAllTours>(() => {
+    log('dismissAllTours');
+    _dismissAllTours();
+  }, [_dismissAllTours, log]);
+
+  const _markMissionCompleted = useChaloStore(s => s.markMissionCompleted);
+  const markMissionCompleted = useCallback<typeof _markMissionCompleted>((missionId) => {
+    log('markMissionCompleted', { missionId });
+    _markMissionCompleted(missionId);
+  }, [_markMissionCompleted, log]);
+
+  const _registerActionHandler = useChaloStore(s => s.registerActionHandler);
+  const registerActionHandler = useCallback<typeof _registerActionHandler>((type, handler) => {
+    log('registerActionHandler', { type });
+    _registerActionHandler(type, handler);
+  }, [_registerActionHandler, log]);
+
+  const _executeAction = useChaloStore(s => s.executeAction);
+  const executeAction = useCallback<typeof _executeAction>((action) => {
+    log('executeAction', { type: action.type });
+    return _executeAction(action);
+  }, [_executeAction, log]);
+
+  const _executeActionSequence = useChaloStore(s => s.executeActionSequence);
+  const executeActionSequence = useCallback<typeof _executeActionSequence>((actions, stepId) => {
+    log('executeActionSequence', { stepId, count: actions.length });
+    return _executeActionSequence(actions, stepId);
+  }, [_executeActionSequence, log]);
+
+  const _cancelExecution = useChaloStore(s => s.cancelExecution);
+  const cancelExecution = useCallback<typeof _cancelExecution>(() => {
+    log('cancelExecution');
+    _cancelExecution();
+  }, [_cancelExecution, log]);
+
+  const _addInteraction = useChaloStore(s => s.addInteraction);
+  const addInteraction = useCallback<typeof _addInteraction>((stepId, actionText) => {
+    log('addInteraction', { stepId, actionText });
+    _addInteraction(stepId, actionText);
+  }, [_addInteraction, log]);
+
+  const _registerMission = useChaloStore(s => s.registerMission);
+  const registerMission = useCallback<typeof _registerMission>((mission) => {
+    log('registerMission', { missionId: mission.id });
+    _registerMission(mission);
+  }, [_registerMission, log]);
+
+  const _recordTourEntry = useChaloStore(s => s.recordTourEntry);
+  const recordTourEntry = useCallback<typeof _recordTourEntry>((missionId, stepId, completed) => {
+    log('recordTourEntry', { missionId, stepId, completed });
+    _recordTourEntry(missionId, stepId, completed);
+  }, [_recordTourEntry, log]);
+
+  // Additional state selectors (completedMissions, executionContext, tourHistory)
   const completedMissions = useChaloStore(s => s.completedMissions);
   const executionContext = useChaloStore(s => s.executionContext);
-  const registerActionHandler = useChaloStore(s => s.registerActionHandler);
-  const executeAction = useChaloStore(s => s.executeAction);
-  const executeActionSequence = useChaloStore(s => s.executeActionSequence);
-  const cancelExecution = useChaloStore(s => s.cancelExecution);
-  const addInteraction = useChaloStore(s => s.addInteraction);
-  const registerMission = useChaloStore(s => s.registerMission);
-  const recordTourEntry = useChaloStore(s => s.recordTourEntry);
   const tourHistory = useChaloStore(s => s.tourHistory);
 
-  // Wrap startMission to record tour entry
+  // Wrap startMission to record tour entry (uses raw store actions to avoid double-logging)
   const startMission = useCallback((missionId: MissionId) => {
-    recordTourEntry(missionId, '', false);
-    startMissionInStore(missionId);
-  }, [startMissionInStore, recordTourEntry]);
+    log('startMission', { missionId });
+    _recordTourEntry(missionId, '', false);
+    _startMissionInStore(missionId);
+  }, [_startMissionInStore, _recordTourEntry, log]);
 
   const fieldErrors = useMemo(() => form?.formState.errors || {}, [form?.formState.errors]);
 
@@ -200,22 +308,25 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     const steps = activeMission.steps;
     const currentIndex = steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex < steps.length - 1) {
-      recordTourEntry(activeMission.id, steps[currentIndex + 1].id, false);
-      goToStep(steps[currentIndex + 1].id);
+      log('nextStep', { missionId: activeMission.id, stepId: steps[currentIndex + 1].id });
+      _recordTourEntry(activeMission.id, steps[currentIndex + 1].id, false);
+      _goToStep(steps[currentIndex + 1].id);
     } else {
-      recordTourEntry(activeMission.id, currentStepId, true);
-      completeMission();
+      log('nextStep', { missionId: activeMission.id, completing: true });
+      _recordTourEntry(activeMission.id, currentStepId, true);
+      _completeMission();
     }
-  }, [activeMission, currentStepId, goToStep, completeMission, recordTourEntry]);
+  }, [activeMission, currentStepId, log, _recordTourEntry, _goToStep, _completeMission]);
 
   const prevStep = useCallback(() => {
     if (!activeMission || !currentStepId) return;
     const steps = activeMission.steps;
     const currentIndex = steps.findIndex((s) => s.id === currentStepId);
     if (currentIndex > 0) {
-      goToStep(steps[currentIndex - 1].id);
+      log('prevStep', { stepId: steps[currentIndex - 1].id });
+      _goToStep(steps[currentIndex - 1].id);
     }
-  }, [activeMission, currentStepId, goToStep]);
+  }, [activeMission, currentStepId, log, _goToStep]);
 
   // Auto-execute action sequence when step changes and has actions
   useEffect(() => {
@@ -282,8 +393,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   // This enables cross-form updates (e.g., bubble auto-fill reaching a modal form).
   const fillField = useCallback(
     (name: string, value: unknown) => {
+      log('fillField', { name });
       formUpdatedRef.current.add(name);
-      updateFieldInStore(name, value, 'valid');
+      _updateFieldInStore(name, value, 'valid');
       if (form) {
         try {
           form.setValue(name as Path<TFieldValues>, value as PathValue<TFieldValues, Path<TFieldValues>>, {
@@ -296,11 +408,12 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         }
       }
     },
-    [form, updateFieldInStore]
+    [form, log]
   );
 
   const registerField = useCallback(
     (name: Path<TFieldValues>, rhfOptions?: RegisterOptions<TFieldValues>) => {
+      log('registerField', { name });
       // Pre-populate from store if a value already exists
       if (fieldValues[name] !== undefined && form) {
         try {
@@ -319,9 +432,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
           name,
           'data-chalo-field': String(name),
           onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-            updateFieldInStore(name, e.target.value),
-          onFocus: () => updateFieldInStore(name, fieldValues[name], 'focused'),
-          onBlur: () => updateFieldInStore(name, fieldValues[name], 'idle'),
+            _updateFieldInStore(name, e.target.value),
+          onFocus: () => _updateFieldInStore(name, fieldValues[name], 'focused'),
+          onBlur: () => _updateFieldInStore(name, fieldValues[name], 'idle'),
         };
       }
       const registered = form.register(name, rhfOptions);
@@ -331,15 +444,15 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         'data-chalo-field': String(name),
         onChange: async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onChange(e);
-          updateFieldInStore(name, e.target.value);
+          _updateFieldInStore(name, e.target.value);
         },
         onBlur: async (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onBlur(e);
-          updateFieldInStore(name, fieldValues[name], 'idle');
+          _updateFieldInStore(name, fieldValues[name], 'idle');
         }
       };
     },
-    [form, updateFieldInStore, fieldValues]
+    [form, _updateFieldInStore, fieldValues, log]
   );
 
   return {
@@ -392,22 +505,35 @@ export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues
   enabled = true,
 ) {
   const fieldValues = useChaloStore(s => s.fieldValues);
-  const fieldStates = useChaloStore(s => s.fieldStates);
   const updateFieldInStore = useChaloStore(s => s.updateField);
   const formUpdatedRef = useRef<Set<string>>(new Set());
   const prevFieldValuesRef = useRef<Record<string, unknown>>({});
+
+  // Initialize prevFieldValuesRef with form's current values on mount
+  // so default values don't trigger false "form updated" flags
+  useEffect(() => {
+    const vals = form.getValues();
+    prevFieldValuesRef.current = { ...vals };
+  }, [form]);
 
   // Direction 1: Form → Store
   useEffect(() => {
     if (!enabled) return;
     const subscription = form.watch((value, { name }) => {
       if (name) {
-        formUpdatedRef.current.add(name);
-        updateFieldInStore(name, value[name], 'valid');
+        const newVal = value[name];
+        if (prevFieldValuesRef.current[name] !== newVal) {
+          formUpdatedRef.current.add(name);
+          prevFieldValuesRef.current[name] = newVal;
+          updateFieldInStore(name, newVal, 'valid');
+        }
       } else {
         Object.entries(value).forEach(([n, v]) => {
-          formUpdatedRef.current.add(n);
-          updateFieldInStore(n, v, 'valid');
+          if (prevFieldValuesRef.current[n] !== v) {
+            formUpdatedRef.current.add(n);
+            prevFieldValuesRef.current[n] = v;
+            updateFieldInStore(n, v, 'valid');
+          }
         });
       }
     });
@@ -434,13 +560,8 @@ export function useChaloFieldSync<TFieldValues extends FieldValues = FieldValues
         } catch {
           // Field may not be registered
         }
-        // Re-propagate the field state from store to avoid downgrade
-        const currentState = fieldStates[name];
-        if (currentState && currentState !== 'idle') {
-          updateFieldInStore(name, storeVal, currentState);
-        }
         prevFieldValuesRef.current[name] = storeVal;
       }
     });
-  }, [fieldValues, fieldStates, form, enabled, updateFieldInStore]);
+  }, [fieldValues, form, enabled]);
 }

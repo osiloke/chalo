@@ -365,7 +365,7 @@ export default function App() {
     currentStep,
     nextStep,
     fieldValues,
-  } = useChalo({ form });
+  } = useChalo({ form, debug: import.meta.env.DEV });
 
   const handleRegisterMissions = useCallback(() => {
     registerMission(ONBOARDING_MISSION);
