@@ -7,10 +7,10 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     [
-      "@semantic-release/npm",
+      "@semantic-release/exec",
       {
-        "pkgRoot": "packages/chalo",
-        "npmPublish": true
+        "prepareCmd": "sed -i 's/\"version\": \".*\"/\"version\": \"${nextRelease.version}\"/' packages/chalo/package.json",
+        "publishCmd": "cd packages/chalo && pnpm publish --provenance --access public"
       }
     ],
     [
