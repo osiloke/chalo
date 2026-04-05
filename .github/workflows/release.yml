@@ -34,9 +34,6 @@ jobs:
         with:
           version: 10.32.1
 
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
