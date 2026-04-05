@@ -10,7 +10,7 @@
       "@semantic-release/exec",
       {
         "prepareCmd": "sed -i 's/\"version\": \".*\"/\"version\": \"${nextRelease.version}\"/' packages/chalo/package.json",
-        "publishCmd": "cd packages/chalo && pnpm publish --provenance --access public"
+        "publishCmd": "cd packages/chalo && npm publish --provenance --access public"
       }
     ],
     [
