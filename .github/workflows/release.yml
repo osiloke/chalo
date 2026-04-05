@@ -44,7 +44,7 @@ jobs:
         run: pnpm build:chalo
 
       - name: Run tests
-        run: pnpm -w test -- --run --passWithNoTests
+        run: pnpm -w test -- --run
 
       - name: Semantic Release
         env:
