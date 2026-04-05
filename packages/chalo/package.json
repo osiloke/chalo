@@ -56,8 +56,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "prepack": "cp -f ../../README.md ./README.md",
-    "postpack": "rm -f README.md",
+    "prepack": "cp -f ../../README.md ./README.md && cp -f ../../LICENSE ./LICENSE",
+    "postpack": "rm -f README.md LICENSE",
     "prepublishOnly": "vitest run --passWithNoTests && npm run build"
   },
   "devDependencies": {
