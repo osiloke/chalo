@@ -286,8 +286,6 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     switch (condition.type) {
       case 'field_value':
         if (!condition.field) return false;
-        // Use loose equality to handle type coercion (e.g., "5" == 5)
-        // eslint-disable-next-line eqeqeq
         return fieldValues[condition.field] == condition.value;
       case 'field_touched':
         if (!condition.field) return false;
@@ -408,7 +406,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         }
       }
     },
-    [form, log]
+    [form, log, _updateFieldInStore]
   );
 
   const registerField = useCallback(

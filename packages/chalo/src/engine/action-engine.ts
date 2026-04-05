@@ -109,7 +109,6 @@ function evaluateCondition(condition: SuccessCondition | undefined, ctx: Executi
   switch (condition.type) {
     case 'field_value':
       if (!condition.field) return false;
-      // eslint-disable-next-line eqeqeq
       return ctx.variables[condition.field] == condition.value;
     case 'field_touched':
       if (!condition.field) return false;
@@ -134,7 +133,7 @@ const builtInHandlers: Record<ActionType, ActionHandler> = {
   wait: waitHandler,
   conditional: conditionalHandler,
   navigate: navigateHandler,
-  custom: async (_config, _ctx) => {
+  custom: async (_config) => {
     const { handlerId } = _config as CustomActionConfig;
     throw new Error(`No handler registered for custom action: ${handlerId}`);
   },
