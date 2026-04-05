@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/osiloke/chalo/compare/v1.0.2...v1.0.3) (2026-04-05)
+
+
+### Performance Improvements
+
+* fix janky bubbles animation in SmartDrawer ([5ebfc79](https://github.com/osiloke/chalo/commit/5ebfc79fcdb29b46d36ba373dcc4e93288ef68c2))
+
 ## [1.0.2](https://github.com/osiloke/chalo/compare/v1.0.1...v1.0.2) (2026-04-05)
 
 
