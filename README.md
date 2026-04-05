@@ -1,11 +1,11 @@
 # chalo
 <p align="center">
-  <img src="./apps/demo/src/assets/logo.svg" alt="Chalo Logo" width="120" />
+  <img src="./scripts/logo.png" alt="Chalo Logo" width="120" />
 </p>
 
 [![npm version](https://img.shields.io/npm/v/@osiloke%2Fchalo.svg?style=flat-square)](https://www.npmjs.com/package/@osiloke/chalo)
 [![npm downloads](https://img.shields.io/npm/dm/@osiloke%2Fchalo.svg?style=flat-square)](https://www.npmjs.com/package/@osiloke/chalo)
-[![license](https://img.shields.io/npm/l/chalo.svg?style=flat-square)](LICENSE)
+[![license](https://img.shields.io/npm/l/@osiloke%2Fchalo.svg?style=flat-square)](LICENSE)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/chalo?style=flat-square)](https://bundlephobia.com/package/@osiloke/chalo)
 [![typescript](https://img.shields.io/badge/TypeScript-5.0%2B-blue?style=flat-square)](https://www.typescriptlang.org/)
 
