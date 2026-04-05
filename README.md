@@ -3,10 +3,10 @@
   <img src="./apps/demo/src/assets/logo.svg" alt="Chalo Logo" width="120" />
 </p>
 
-[![npm version](https://img.shields.io/npm/v/chalo.svg?style=flat-square)](https://www.npmjs.com/package/chalo)
-[![npm downloads](https://img.shields.io/npm/dm/chalo.svg?style=flat-square)](https://www.npmjs.com/package/chalo)
+[![npm version](https://img.shields.io/npm/v/@osiloke%2Fchalo.svg?style=flat-square)](https://www.npmjs.com/package/@osiloke/chalo)
+[![npm downloads](https://img.shields.io/npm/dm/@osiloke%2Fchalo.svg?style=flat-square)](https://www.npmjs.com/package/@osiloke/chalo)
 [![license](https://img.shields.io/npm/l/chalo.svg?style=flat-square)](LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/chalo?style=flat-square)](https://bundlephobia.com/package/chalo)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/chalo?style=flat-square)](https://bundlephobia.com/package/@osiloke/chalo)
 [![typescript](https://img.shields.io/badge/TypeScript-5.0%2B-blue?style=flat-square)](https://www.typescriptlang.org/)
 
 > **A modern React component library for building intelligent, action-driven UI experiences.**
