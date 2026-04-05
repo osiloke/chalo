@@ -1,6 +1,6 @@
 # chalo
 <p align="center">
-  <img src="./scripts/logo.png" alt="Chalo Logo" width="120" />
+  <img src="scripts/logo.png" alt="Chalo Logo" width="120" />
 </p>
 
 [![npm version](https://img.shields.io/npm/v/@osiloke%2Fchalo.svg?style=flat-square)](https://www.npmjs.com/package/@osiloke/chalo)
