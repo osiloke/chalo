@@ -438,32 +438,31 @@ pnpm run format:fix
 
 ## 🚢 Publishing
 
-### First-Time Setup
+Releases are fully automated via [semantic-release](https://github.com/semantic-release/semantic-release). Every push to `main` is analyzed for conventional commits, and if there are release-worthy changes, a new version is automatically:
 
-Run the interactive OIDC setup script:
+1. **Version-bumped** (semver based on commit type)
+2. **Changelog-updated**
+3. **Published to npm** with provenance
+4. **Released on GitHub** with auto-generated notes
+
+### Conventional Commits
+
+Use these commit prefixes to trigger releases:
+
+| Prefix | Example | Effect |
+|--------|---------|--------|
+| `feat:` | `feat: add TargetHighlight component` | Bumps **minor** version |
+| `fix:` | `fix: resolve drawer positioning bug` | Bumps **patch** version |
+| `BREAKING CHANGE:` in body | `feat: redesign API\n\nBREAKING CHANGE: ...` | Bumps **major** version |
+| `docs:`, `chore:`, `ci:` | `docs: update README` | No release |
+
+### Manual Release (Local)
 
 ```bash
-./scripts/setup-npm-oidc.sh
+npx semantic-release --dry-run
 ```
 
-This configures **NPM Trusted Publishing** (no API tokens required!).
-
-### Manual Publish
-
-```bash
-cd packages/chalo
-npm publish --provenance --access public
-```
-
-### Auto-Publish via GitHub Releases
-
-Once OIDC is configured, creating a GitHub Release automatically publishes to npm:
-
-```bash
-gh release create v0.2.0 --generate-notes
-```
-
-> 📖 See [GitHub Actions Workflow](.github/workflows/publish.yml) for details.
+> 📖 See [GitHub Actions Workflow](.github/workflows/release.yml) for details.
 
 ---
 
