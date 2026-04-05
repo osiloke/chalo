@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/osiloke/chalo/compare/v1.0.0...v1.0.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **release:** use npm publish instead of pnpm publish for OIDC support ([f61fef8](https://github.com/osiloke/chalo/commit/f61fef85e0fc924ccf1c49577736d8ff0b0e0008))
+
 # 1.0.0 (2026-04-05)
 
 
