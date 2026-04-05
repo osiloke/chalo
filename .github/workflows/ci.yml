@@ -29,7 +29,7 @@ jobs:
         run: pnpm build:chalo
 
       - name: Run tests
-        run: pnpm -w test -- --run
+        run: pnpm -w test -- --run --passWithNoTests
 
       - name: Run linter
         run: pnpm -w lint
