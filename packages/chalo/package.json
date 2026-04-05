@@ -49,6 +49,7 @@
     "build": "npm run build:types && vite build && npm run copy:types",
     "build:types": "tsc --project tsconfig.json",
     "copy:types": "cp dist/types/index.d.ts dist/types/index.d.mts",
+    "dev": "npm run build:types && vite build --watch",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --config ../../.eslintrc.cjs",
     "lint:fix": "eslint . --ext ts,tsx --fix --config ../../.eslintrc.cjs",
     "format": "prettier --check .",

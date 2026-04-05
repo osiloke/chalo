@@ -9,7 +9,8 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter chalo-demo dev",
+    "dev": "pnpm --filter @osiloke/chalo dev & pnpm --filter chalo-demo dev",
+    "dev:demo": "pnpm --filter chalo-demo dev",
     "build:chalo": "pnpm --filter chalo build",
     "build:demo": "pnpm --filter chalo-demo build",
     "build": "pnpm build:chalo && pnpm build:demo",

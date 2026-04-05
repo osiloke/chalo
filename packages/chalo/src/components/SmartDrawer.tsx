@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChaloStore } from '../store';
 import { useChalo } from '../hooks/use-chalo';
@@ -12,21 +12,34 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// CSS keyframes for typing indicator (injected once)
+if (typeof document !== 'undefined' && !document.getElementById('chalo-typing-keyframes')) {
+  const style = document.createElement('style');
+  style.id = 'chalo-typing-keyframes';
+  style.textContent = `
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-3px); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 interface ChatMessage {
   id: string;
   role: 'system' | 'user';
   content: React.ReactNode;
 }
 
-// --- BUBBLE COMPONENTS ---
+// --- BUBBLE COMPONENTS (Memoized to prevent re-renders during animations) ---
 
-const MessageBubble = ({ content }: { content: React.ReactNode }) => (
+const MessageBubble = memo(({ content }: { content: React.ReactNode }) => (
   <div className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 text-sm shadow-sm w-fit max-w-[90%]">
     {content}
   </div>
-);
+));
 
-const InputBubble = ({ targetField, value, onChange }: { targetField: string; value: unknown; onChange: (val: unknown) => void }) => (
+const InputBubble = memo(({ targetField, value, onChange }: { targetField: string; value: unknown; onChange: (val: unknown) => void }) => (
   <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
     <div className="flex items-center space-x-2 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
       <Type size={12} />
@@ -39,9 +52,9 @@ const InputBubble = ({ targetField, value, onChange }: { targetField: string; va
       placeholder={`Type ${targetField}...`}
     />
   </div>
-);
+));
 
-const SelectBubble = ({ targetField, value, options, onChange }: { targetField: string; value: unknown; options?: Array<{ label: string, value: unknown }>; onChange: (val: unknown) => void }) => (
+const SelectBubble = memo(({ targetField, value, options, onChange }: { targetField: string; value: unknown; options?: Array<{ label: string, value: unknown }>; onChange: (val: unknown) => void }) => (
   <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
     <div className="flex items-center space-x-2 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
       <ListFilter size={12} />
@@ -63,9 +76,9 @@ const SelectBubble = ({ targetField, value, options, onChange }: { targetField: 
       </div>
     </div>
   </div>
-);
+));
 
-const ActionGroupBubble = ({
+const ActionGroupBubble = memo(({
   actions,
   onAction,
   onNext,
@@ -92,9 +105,9 @@ const ActionGroupBubble = ({
       </button>
     ))}
   </div>
-);
+));
 
-const ActionStatusBubble = ({ action, result }: { action: Action; result: ActionResult }) => {
+const ActionStatusBubble = memo(({ action, result }: { action: Action; result: ActionResult }) => {
   const statusConfig = {
     running: { icon: Loader2, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', label: 'Executing...' },
     success: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', label: 'Completed' },
@@ -120,9 +133,9 @@ const ActionStatusBubble = ({ action, result }: { action: Action; result: Action
       </div>
     </div>
   );
-};
+});
 
-const BubbleRenderer = ({
+const BubbleRenderer = memo(({
   bubble,
   fieldValues,
   onFill,
@@ -137,6 +150,31 @@ const BubbleRenderer = ({
   onPrev: () => void;
   onInteraction: (text: string) => void;
 }) => {
+  const handleAction = useCallback((a: StepAction) => {
+    if (a.type === 'fill_field' && a.data) {
+      const d = a.data as { field: string; value: unknown };
+      onFill(d.field, d.value);
+      onInteraction(`Auto-filled ${d.field} with ${d.value}`);
+    } else if (a.type === 'click' && a.data) {
+      const d = a.data as { selector: string };
+      const el = document.querySelector(d.selector);
+      if (el) { (el as HTMLElement).click(); onInteraction(`Clicked: ${d.selector}`); }
+    } else if (a.onClick) {
+      a.onClick();
+      onInteraction(`Performed action: ${a.label}`);
+    } else {
+      onInteraction(`Clicked: ${a.label}`);
+    }
+  }, [onFill, onInteraction]);
+
+  const handleInputChange = useCallback((v: unknown) => {
+    onFill(bubble.targetField!, v);
+  }, [bubble.targetField, onFill]);
+
+  const handleSelectChange = useCallback((v: unknown) => {
+    onFill(bubble.targetField!, v);
+  }, [bubble.targetField, onFill]);
+
   switch (bubble.type) {
     case 'message':
       return <MessageBubble content={bubble.content} />;
@@ -145,9 +183,7 @@ const BubbleRenderer = ({
         <InputBubble
           targetField={bubble.targetField!}
           value={fieldValues[bubble.targetField!]}
-          onChange={(v) => {
-            onFill(bubble.targetField!, v);
-          }}
+          onChange={handleInputChange}
         />
       );
     case 'select':
@@ -156,9 +192,7 @@ const BubbleRenderer = ({
           targetField={bubble.targetField!}
           options={bubble.options}
           value={fieldValues[bubble.targetField!]}
-          onChange={(v) => {
-            onFill(bubble.targetField!, v);
-          }}
+          onChange={handleSelectChange}
         />
       );
     case 'action-group':
@@ -167,30 +201,42 @@ const BubbleRenderer = ({
           actions={bubble.actions || []}
           onNext={onNext}
           onPrev={onPrev}
-          onAction={(a) => {
-            if (a.type === 'fill_field' && a.data) {
-              const d = a.data as { field: string; value: unknown };
-              onFill(d.field, d.value);
-              onInteraction(`Auto-filled ${d.field} with ${d.value}`);
-            } else if (a.type === 'click' && a.data) {
-              const d = a.data as { selector: string };
-              const el = document.querySelector(d.selector);
-              if (el) { (el as HTMLElement).click(); onInteraction(`Clicked: ${d.selector}`); }
-            } else if (a.onClick) {
-              a.onClick();
-              onInteraction(`Performed action: ${a.label}`);
-            } else {
-              onInteraction(`Clicked: ${a.label}`);
-            }
-          }}
+          onAction={handleAction}
         />
       );
     default:
       return null;
   }
-};
+});
 
 // --- MAIN DRAWER COMPONENT ---
+
+// Typing indicator using CSS animations (no JS thread cost)
+const TypingIndicator = memo(() => (
+  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex items-center space-x-1">
+    <div
+      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      style={{
+        animation: 'typingBounce 0.6s ease-in-out infinite',
+        animationDelay: '0ms',
+      }}
+    />
+    <div
+      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      style={{
+        animation: 'typingBounce 0.6s ease-in-out infinite',
+        animationDelay: '200ms',
+      }}
+    />
+    <div
+      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      style={{
+        animation: 'typingBounce 0.6s ease-in-out infinite',
+        animationDelay: '400ms',
+      }}
+    />
+  </div>
+));
 
 export function SmartDrawer({ className }: { className?: string }) {
   const store = useChaloStore();
@@ -198,6 +244,7 @@ export function SmartDrawer({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [displayedStepId, setDisplayedStepId] = useState<string | null>(null);
 
@@ -246,12 +293,65 @@ export function SmartDrawer({ className }: { className?: string }) {
     return messages;
   }, [activeMission, displayedStepId, store.interactionHistory]);
 
-  // Auto-scroll Down
+  // Auto-scroll Down (deferred to avoid fighting with animations)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100); // Wait for animation to settle
+    return () => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
   }, [chatHistory, isTyping]);
+
+  // --- All hooks MUST be before any early returns (Rules of Hooks) ---
+
+  const handleBubbleInteraction = useCallback((text: string) => {
+    store.addInteraction(currentStep?.id ?? '', text);
+  }, [currentStep?.id, store]);
+
+  const handleLegacyAction = useCallback((a: StepAction) => {
+    if (!currentStep) return;
+    if (a.type === 'fill_field' && a.data) {
+      const d = a.data as { field: string; value: unknown };
+      fillField(d.field, d.value);
+      store.addInteraction(currentStep.id, `Used auto-fill: ${d.value}`);
+    } else if (a.type === 'click' && a.data) {
+      const d = a.data as { selector: string };
+      const el = document.querySelector(d.selector);
+      if (el) { (el as HTMLElement).click(); store.addInteraction(currentStep.id, `Clicked: ${d.selector}`); }
+    } else if (a.onClick) {
+      a.onClick();
+      store.addInteraction(currentStep.id, `Selected: ${a.label}`);
+    }
+  }, [fillField, currentStep?.id, store]);
+
+  const handlePrev = useCallback(() => {
+    if (!currentStep) return;
+    store.addInteraction(currentStep.id, "Navigated backwards");
+    prevStep();
+  }, [currentStep?.id, store, prevStep]);
+
+  const handleNext = useCallback(() => {
+    if (!currentStep) return;
+    if (currentStep.targetField) {
+      const val = fieldValues[currentStep.targetField];
+      store.addInteraction(currentStep.id, `Confirmed value: ${val}`);
+    } else if (!store.interactionHistory.find(i => i.stepId === currentStep.id)) {
+      store.addInteraction(currentStep.id, "Proceeded to next step");
+    }
+    nextStep();
+  }, [currentStep, fieldValues, store, nextStep]);
+
+  const handleDismiss = useCallback(() => {
+    store.dismissAllTours();
+    store.resetMission();
+  }, [store]);
 
   if (!activeMission || !currentStep) {
     // Show resume prompt if there's an incomplete tour and no active mission
@@ -266,7 +366,7 @@ export function SmartDrawer({ className }: { className?: string }) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="h-screen w-[400px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]"
+            className="h-screen w-100 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]"
           >
             <div className="p-6 flex flex-col items-center text-center space-y-4">
               <div className="p-4 bg-amber-500/10 rounded-2xl">
@@ -304,18 +404,17 @@ export function SmartDrawer({ className }: { className?: string }) {
     return null;
   }
 
-
   return (
     <>
       <AnimatePresence>
         {isOpen && (
           <motion.aside
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 400, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              'h-screen overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]',
+              'h-screen w-100 overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]',
               className
             )}
           >
@@ -333,10 +432,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                   <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">{activeMission.title}</p>
                 </div>
               </div>
-              <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={() => {
-                store.dismissAllTours();
-                store.resetMission();
-              }}>
+              <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={handleDismiss}>
                 <X size={18} />
               </button>
             </div>
@@ -347,12 +443,13 @@ export function SmartDrawer({ className }: { className?: string }) {
                 {chatHistory.map((msg) => (
                   <motion.div
                     key={msg.id}
+                    layout
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}
                   >
                     <div className={cn(
-                      "max-w-[85%] rounded-2xl p-4 text-sm shadow-sm",
+                      "max-w-[85%] rounded-2xl p-4 text-sm shadow-sm will-change-transform",
                       msg.role === 'user'
                         ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-tr-sm"
                         : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-tl-sm"
@@ -363,12 +460,13 @@ export function SmartDrawer({ className }: { className?: string }) {
                 ))}
 
                 {isTyping && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="flex justify-start w-full">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex items-center space-x-1">
-                      <motion.div className="w-1.5 h-1.5 bg-slate-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} />
-                      <motion.div className="w-1.5 h-1.5 bg-slate-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
-                      <motion.div className="w-1.5 h-1.5 bg-slate-400 rounded-full" animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
-                    </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="flex justify-start w-full"
+                  >
+                    <TypingIndicator />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -384,7 +482,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                         onFill={fillField}
                         onNext={nextStep}
                         onPrev={prevStep}
-                        onInteraction={(text) => store.addInteraction(currentStep.id, text)}
+                        onInteraction={handleBubbleInteraction}
                       />
                     </div>
                   ))}
@@ -395,20 +493,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                       actions={currentStep.actions}
                       onNext={nextStep}
                       onPrev={prevStep}
-                      onAction={(a) => {
-                        if (a.type === 'fill_field' && a.data) {
-                          const d = a.data as { field: string; value: unknown };
-                          fillField(d.field, d.value);
-                          store.addInteraction(currentStep.id, `Used auto-fill: ${d.value}`);
-                        } else if (a.type === 'click' && a.data) {
-                          const d = a.data as { selector: string };
-                          const el = document.querySelector(d.selector);
-                          if (el) { (el as HTMLElement).click(); store.addInteraction(currentStep.id, `Clicked: ${d.selector}`); }
-                        } else if (a.onClick) {
-                          a.onClick();
-                          store.addInteraction(currentStep.id, `Selected: ${a.label}`);
-                        }
-                      }}
+                      onAction={handleLegacyAction}
                     />
                   )}
 
@@ -443,10 +528,7 @@ export function SmartDrawer({ className }: { className?: string }) {
             <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center justify-between space-x-2">
                 <button
-                  onClick={() => {
-                    store.addInteraction(currentStep.id, "Navigated backwards");
-                    prevStep();
-                  }}
+                  onClick={handlePrev}
                   disabled={activeMission.steps.indexOf(currentStep) === 0}
                   className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-colors"
                 >
@@ -458,15 +540,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                   </span>
                 </div>
                 <button
-                  onClick={() => {
-                    if (currentStep.targetField) {
-                      const val = fieldValues[currentStep.targetField];
-                      store.addInteraction(currentStep.id, `Confirmed value: ${val}`);
-                    } else if (!store.interactionHistory.find(i => i.stepId === currentStep.id)) {
-                      store.addInteraction(currentStep.id, "Proceeded to next step");
-                    }
-                    nextStep();
-                  }}
+                  onClick={handleNext}
                   disabled={(currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) || activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1}
                   className={cn("p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50")}
                 >
