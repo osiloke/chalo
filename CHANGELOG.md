@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/osiloke/chalo/compare/v1.0.1...v1.0.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **packages/chalo:** reinstate LICENSE in prepack for npm README visibility ([6338d45](https://github.com/osiloke/chalo/commit/6338d45a0d0137fe0895d32f821f90321a1ca58e))
+
 ## [1.0.1](https://github.com/osiloke/chalo/compare/v1.0.0...v1.0.1) (2026-04-05)
 
 
