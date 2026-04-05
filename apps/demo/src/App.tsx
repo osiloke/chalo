@@ -5,7 +5,7 @@ import {
   useChalo,
   Mission,
   Action,
-} from 'chalo';
+} from '@osiloke/chalo';
 import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
 import {
   LayoutDashboard,

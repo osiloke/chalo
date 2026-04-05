@@ -32,12 +32,12 @@ importers:
 
   apps/demo:
     dependencies:
+      '@osiloke/chalo':
+        specifier: workspace:*
+        version: link:../../packages/chalo
       '@tailwindcss/vite':
         specifier: ^4.2.2
         version: 4.2.2(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(jiti@2.6.1))
-      chalo:
-        specifier: workspace:*
-        version: link:../../packages/chalo
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

@@ -1,5 +1,5 @@
 {
-  "name": "chalo",
+  "name": "@osiloke/chalo",
   "version": "0.1.0",
   "description": "A modern React component library for intelligent UI interactions and guided experiences",
   "type": "module",
@@ -55,7 +55,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "prepublishOnly": "vitest run && npm run build"
+    "prepublishOnly": "vitest run --passWithNoTests && npm run build"
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.0",

@@ -9,7 +9,8 @@
     [
       "@semantic-release/npm",
       {
-        "pkgRoot": "packages/chalo"
+        "pkgRoot": "packages/chalo",
+        "npmPublish": true
       }
     ],
     [

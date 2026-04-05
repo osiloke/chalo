@@ -32,13 +32,13 @@ Chalo provides a declarative API for creating guided user experiences, interacti
 
 ```bash
 # npm
-npm install chalo
+npm install @osiloke/chalo
 
 # yarn
-yarn add chalo
+yarn add @osiloke/chalo
 
 # pnpm
-pnpm add chalo
+pnpm add @osiloke/chalo
 ```
 
 ### Peer Dependencies
