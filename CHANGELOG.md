@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/osiloke/chalo/compare/v1.1.0...v1.1.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **ci:** configure npm auth token for OIDC publishing ([2a135b7](https://github.com/osiloke/chalo/commit/2a135b7fb53c0badcc82ce03edc50f4f3897ae8a))
+
 # [1.1.0](https://github.com/osiloke/chalo/compare/v1.0.3...v1.1.0) (2026-04-06)
 
 
