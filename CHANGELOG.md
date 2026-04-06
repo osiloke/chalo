@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/osiloke/chalo/compare/v1.1.1...v1.2.0) (2026-04-06)
+
+
+### Features
+
+* **chalo:** add theme token system with customizable CSS variables ([b9996a6](https://github.com/osiloke/chalo/commit/b9996a64e5298f832a811c4d89d000a570817bd4))
+
 ## [1.1.1](https://github.com/osiloke/chalo/compare/v1.1.0...v1.1.1) (2026-04-06)
 
 
