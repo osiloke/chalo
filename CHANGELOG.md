@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/osiloke/chalo/compare/v1.0.3...v1.1.0) (2026-04-06)
+
+
+### Features
+
+* **chalo:** add element_exists condition type to waitFor ([7a98b50](https://github.com/osiloke/chalo/commit/7a98b5069f5cc3123aed5b4888d2aeed4ede8eca))
+
 ## [1.0.3](https://github.com/osiloke/chalo/compare/v1.0.2...v1.0.3) (2026-04-05)
 
 
