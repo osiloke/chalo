@@ -43,6 +43,11 @@ jobs:
       - name: Run tests
         run: pnpm -w test -- --run
 
+      - name: Setup npm auth for OIDC publishing
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
