@@ -290,6 +290,12 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       case 'field_touched':
         if (!condition.field) return false;
         return (fieldStates[condition.field] || 'idle') !== 'idle';
+      case 'element_exists': {
+        if (!condition.field) return false;
+        const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}`;
+        const el = document.querySelector(selector);
+        return condition.exists === false ? !el : !!el;
+      }
       case 'custom':
         if (condition.predicate) {
           return condition.predicate(fieldValues, form?.getValues());

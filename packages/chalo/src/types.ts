@@ -162,9 +162,10 @@ export interface StepAction {
 }
 
 export interface SuccessCondition {
-  type: 'field_value' | 'field_touched' | 'custom';
+  type: 'field_value' | 'field_touched' | 'element_exists' | 'custom';
   field?: string;
   value?: unknown;
+  exists?: boolean; // for element_exists type: true (default) or false
   predicate?: (value: unknown, formState: unknown) => boolean;
 }
 

@@ -113,6 +113,12 @@ function evaluateCondition(condition: SuccessCondition | undefined, ctx: Executi
     case 'field_touched':
       if (!condition.field) return false;
       return ctx.variables[`__touched_${condition.field}`] === true;
+    case 'element_exists': {
+      if (!condition.field) return false;
+      const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}`;
+      const el = document.querySelector(selector);
+      return condition.exists === false ? !el : !!el;
+    }
     case 'custom':
       if (condition.predicate) {
         return condition.predicate(ctx.variables, ctx.variables);
