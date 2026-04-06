@@ -65,12 +65,12 @@ export function TargetHighlight({ selector, label, pulse = true }: TargetHighlig
         }}
       >
         <motion.div
-          className="absolute inset-0 rounded-xl border-2 border-indigo-500"
+          className="absolute inset-0 rounded-xl border-2 border-chalo-primary"
           animate={pulse ? { boxShadow: ['0 0 0px rgba(99,102,241,0)', '0 0 20px rgba(99,102,241,0.4)', '0 0 0px rgba(99,102,241,0)'] } : {}}
           transition={{ repeat: Infinity, duration: 2 }}
         />
         {label && (
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-lg shadow-lg">
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-chalo-primary text-white text-xs font-bold px-3 py-1 rounded-lg shadow-lg">
             {label}
           </div>
         )}

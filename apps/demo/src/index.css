@@ -1,6 +1,13 @@
 @import "tailwindcss";
+@import "@osiloke/chalo/theme.css";
 
 @source "../../../packages/chalo/src";
+
+/* Override Chalo theme vars here to match your brand */
+/* @theme {
+  --color-chalo-primary: #your-color;
+  --color-chalo-primary-hover: #your-color;
+} */
 
 @theme {
   --color-brand-primary: #6366f1;
@@ -58,12 +65,12 @@
   }
 
   .text-glow {
-    text-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
   }
 
   .premium-gradient {
-    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent),
-      radial-gradient(circle at bottom left, rgba(244, 63, 94, 0.15), transparent);
+    background: radial-gradient(circle at top right, color-mix(in srgb, var(--color-brand-primary) 15%, transparent), transparent),
+      radial-gradient(circle at bottom left, color-mix(in srgb, var(--color-brand-secondary) 15%, transparent), transparent);
   }
 }
 

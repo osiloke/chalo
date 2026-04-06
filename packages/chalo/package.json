@@ -17,12 +17,16 @@
         "types": "./dist/types/index.d.ts",
         "default": "./dist/chalo.cjs"
       }
-    }
+    },
+    "./theme.css": "./src/theme.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/theme.css"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "keywords": [
     "react",
     "component-library",

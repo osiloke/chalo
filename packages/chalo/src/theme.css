@@ -1,0 +1,170 @@
+/**
+ * Chalo Component Library Theme Tokens
+ *
+ * Consuming apps can override these CSS custom properties in their own @theme block
+ * to align Chalo components with their brand colors.
+ *
+ * Example override in app's CSS:
+ * @theme {
+ *   --color-chalo-primary: #your-brand-color;
+ * }
+ *
+ * Dark mode behavior (hybrid):
+ * - By default, follows the user's system preference (prefers-color-scheme)
+ * - Apps can force dark mode with class="dark"
+ * - Apps can force light mode with class="light"
+ */
+
+@theme {
+  /* Primary action color (buttons, links, focus rings) */
+  --color-chalo-primary: #6366f1;
+  --color-chalo-primary-hover: #4f46e5;
+  --color-chalo-primary-light: #eef2ff;
+  --color-chalo-primary-border: #e0e7ff;
+
+  /* Semantic status colors */
+  --color-chalo-success: #10b981;
+  --color-chalo-success-light: #ecfdf5;
+  --color-chalo-success-border: #d1fae5;
+
+  --color-chalo-error: #f43f5e;
+  --color-chalo-error-light: #fff1f2;
+  --color-chalo-error-border: #ffe4e6;
+
+  --color-chalo-warning: #f59e0b;
+  --color-chalo-warning-light: #fffbeb;
+  --color-chalo-warning-border: #fef3c7;
+
+  --color-chalo-info: #3b82f6;
+  --color-chalo-info-light: #eff6ff;
+  --color-chalo-info-border: #dbeafe;
+
+  /* Surface colors (backgrounds, cards) */
+  --color-chalo-surface: #ffffff;
+  --color-chalo-surface-elevated: #ffffff;
+  --color-chalo-surface-subtle: #f8fafc;
+  --color-chalo-surface-muted: #f1f5f9;
+
+  /* Text colors */
+  --color-chalo-text: #0f172a;
+  --color-chalo-text-secondary: #475569;
+  --color-chalo-text-muted: #94a3b8;
+  --color-chalo-text-inverse: #ffffff;
+
+  /* Border colors */
+  --color-chalo-border: #e2e8f0;
+  --color-chalo-border-subtle: #f1f5f9;
+}
+
+/* System preference: auto dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-chalo-primary: #818cf8;
+    --color-chalo-primary-hover: #6366f1;
+    --color-chalo-primary-light: #1e1b4b;
+    --color-chalo-primary-border: #312e81;
+
+    --color-chalo-success: #34d399;
+    --color-chalo-success-light: #022c22;
+    --color-chalo-success-border: #064e3b;
+
+    --color-chalo-error: #fb7185;
+    --color-chalo-error-light: #1c0a0e;
+    --color-chalo-error-border: #4c0519;
+
+    --color-chalo-warning: #fbbf24;
+    --color-chalo-warning-light: #1c1407;
+    --color-chalo-warning-border: #451a03;
+
+    --color-chalo-info: #60a5fa;
+    --color-chalo-info-light: #0c1929;
+    --color-chalo-info-border: #1e3a5f;
+
+    --color-chalo-surface: #0f172a;
+    --color-chalo-surface-elevated: #1e293b;
+    --color-chalo-surface-subtle: #0f172a;
+    --color-chalo-surface-muted: #1e293b;
+
+    --color-chalo-text: #f8fafc;
+    --color-chalo-text-secondary: #cbd5e1;
+    --color-chalo-text-muted: #64748b;
+    --color-chalo-text-inverse: #0f172a;
+
+    --color-chalo-border: #1e293b;
+    --color-chalo-border-subtle: #0f172a;
+  }
+}
+
+/* Class-based override: force dark mode (higher specificity than media query) */
+.dark {
+  --color-chalo-primary: #818cf8;
+  --color-chalo-primary-hover: #6366f1;
+  --color-chalo-primary-light: #1e1b4b;
+  --color-chalo-primary-border: #312e81;
+
+  --color-chalo-success: #34d399;
+  --color-chalo-success-light: #022c22;
+  --color-chalo-success-border: #064e3b;
+
+  --color-chalo-error: #fb7185;
+  --color-chalo-error-light: #1c0a0e;
+  --color-chalo-error-border: #4c0519;
+
+  --color-chalo-warning: #fbbf24;
+  --color-chalo-warning-light: #1c1407;
+  --color-chalo-warning-border: #451a03;
+
+  --color-chalo-info: #60a5fa;
+  --color-chalo-info-light: #0c1929;
+  --color-chalo-info-border: #1e3a5f;
+
+  --color-chalo-surface: #0f172a;
+  --color-chalo-surface-elevated: #1e293b;
+  --color-chalo-surface-subtle: #0f172a;
+  --color-chalo-surface-muted: #1e293b;
+
+  --color-chalo-text: #f8fafc;
+  --color-chalo-text-secondary: #cbd5e1;
+  --color-chalo-text-muted: #64748b;
+  --color-chalo-text-inverse: #0f172a;
+
+  --color-chalo-border: #1e293b;
+  --color-chalo-border-subtle: #0f172a;
+}
+
+/* Class-based override: force light mode (even if system prefers dark) */
+.light {
+  --color-chalo-primary: #6366f1;
+  --color-chalo-primary-hover: #4f46e5;
+  --color-chalo-primary-light: #eef2ff;
+  --color-chalo-primary-border: #e0e7ff;
+
+  --color-chalo-success: #10b981;
+  --color-chalo-success-light: #ecfdf5;
+  --color-chalo-success-border: #d1fae5;
+
+  --color-chalo-error: #f43f5e;
+  --color-chalo-error-light: #fff1f2;
+  --color-chalo-error-border: #ffe4e6;
+
+  --color-chalo-warning: #f59e0b;
+  --color-chalo-warning-light: #fffbeb;
+  --color-chalo-warning-border: #fef3c7;
+
+  --color-chalo-info: #3b82f6;
+  --color-chalo-info-light: #eff6ff;
+  --color-chalo-info-border: #dbeafe;
+
+  --color-chalo-surface: #ffffff;
+  --color-chalo-surface-elevated: #ffffff;
+  --color-chalo-surface-subtle: #f8fafc;
+  --color-chalo-surface-muted: #f1f5f9;
+
+  --color-chalo-text: #0f172a;
+  --color-chalo-text-secondary: #475569;
+  --color-chalo-text-muted: #94a3b8;
+  --color-chalo-text-inverse: #ffffff;
+
+  --color-chalo-border: #e2e8f0;
+  --color-chalo-border-subtle: #f1f5f9;
+}

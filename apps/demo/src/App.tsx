@@ -7,6 +7,7 @@ import {
   Action,
 } from '@osiloke/chalo';
 import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 import {
   LayoutDashboard,
   Users,
@@ -414,6 +415,10 @@ export default function App() {
             <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
               <Search size={20} />
             </button>
+
+            {/* Theme Switcher */}
+            <ThemeSwitcher />
+
             <button className="p-2 text-slate-400 hover:text-indigo-600 relative transition-colors">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-950"></span>

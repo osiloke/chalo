@@ -34,29 +34,29 @@ interface ChatMessage {
 // --- BUBBLE COMPONENTS (Memoized to prevent re-renders during animations) ---
 
 const MessageBubble = memo(({ content }: { content: React.ReactNode }) => (
-  <div className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 text-sm shadow-sm w-fit max-w-[90%]">
+  <div className="bg-chalo-surface text-chalo-text-secondary border border-chalo-border-subtle rounded-2xl rounded-tl-sm p-4 text-sm shadow-sm w-fit max-w-[90%]">
     {content}
   </div>
 ));
 
 const InputBubble = memo(({ targetField, value, onChange }: { targetField: string; value: unknown; onChange: (val: unknown) => void }) => (
-  <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
-    <div className="flex items-center space-x-2 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+  <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
+    <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
       <Type size={12} />
       <span>Manual Entry: {targetField}</span>
     </div>
     <input
       value={String(value || '')}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all text-slate-900 dark:text-white"
+      className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all focus:ring-2 focus:ring-chalo-primary"
       placeholder={`Type ${targetField}...`}
     />
   </div>
 ));
 
 const SelectBubble = memo(({ targetField, value, options, onChange }: { targetField: string; value: unknown; options?: Array<{ label: string, value: unknown }>; onChange: (val: unknown) => void }) => (
-  <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
-    <div className="flex items-center space-x-2 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+  <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
+    <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
       <ListFilter size={12} />
       <span>Select for: {targetField}</span>
     </div>
@@ -64,14 +64,14 @@ const SelectBubble = memo(({ targetField, value, options, onChange }: { targetFi
       <select
         value={String(value || '')}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all appearance-none text-slate-900 dark:text-white"
+        className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all appearance-none focus:ring-2 focus:ring-chalo-primary"
       >
         <option value="" disabled>Select option...</option>
         {options?.map((opt, i) => (
           <option key={i} value={String(opt.value)}>{opt.label}</option>
         ))}
       </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-chalo-text-muted">
         <ChevronRight size={16} className="rotate-90" />
       </div>
     </div>
@@ -98,7 +98,7 @@ const ActionGroupBubble = memo(({
           if (action.type === 'next') onNext();
           if (action.type === 'prev') onPrev();
         }}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-5 rounded-2xl rounded-tr-sm shadow-lg shadow-indigo-500/10 transition-all active:scale-95 flex items-center space-x-2"
+        className="bg-chalo-primary hover:bg-chalo-primary-hover text-white text-sm font-semibold py-2.5 px-5 rounded-2xl rounded-tr-sm shadow-lg transition-all active:scale-95 flex items-center space-x-2"
       >
         <span>{action.label}</span>
         {action.type === 'next' && <ChevronRight size={16} />}
@@ -109,12 +109,12 @@ const ActionGroupBubble = memo(({
 
 const ActionStatusBubble = memo(({ action, result }: { action: Action; result: ActionResult }) => {
   const statusConfig = {
-    running: { icon: Loader2, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', label: 'Executing...' },
-    success: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', label: 'Completed' },
-    failed: { icon: AlertCircle, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/10', border: 'border-rose-200 dark:border-rose-800/30', label: 'Failed' },
-    cancelled: { icon: XCircle, color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/10', border: 'border-slate-200 dark:border-slate-700/30', label: 'Cancelled' },
-    skipped: { icon: ChevronRight, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/10', border: 'border-amber-200 dark:border-amber-800/30', label: 'Skipped' },
-    pending: { icon: Loader2, color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/10', border: 'border-slate-200 dark:border-slate-700/30', label: 'Pending' },
+    running: { icon: Loader2, color: 'text-chalo-info', bg: 'bg-chalo-info-light', border: 'border-chalo-info-border', label: 'Executing...' },
+    success: { icon: CheckCircle2, color: 'text-chalo-success', bg: 'bg-chalo-success-light', border: 'border-chalo-success-border', label: 'Completed' },
+    failed: { icon: AlertCircle, color: 'text-chalo-error', bg: 'bg-chalo-error-light', border: 'border-chalo-error-border', label: 'Failed' },
+    cancelled: { icon: XCircle, color: 'text-chalo-text-muted', bg: 'bg-chalo-surface-subtle', border: 'border-chalo-border', label: 'Cancelled' },
+    skipped: { icon: ChevronRight, color: 'text-chalo-warning', bg: 'bg-chalo-warning-light', border: 'border-chalo-warning-border', label: 'Skipped' },
+    pending: { icon: Loader2, color: 'text-chalo-text-muted', bg: 'bg-chalo-surface-subtle', border: 'border-chalo-border', label: 'Pending' },
   };
   const cfg = statusConfig[result.status];
   const Icon = cfg.icon;
@@ -127,9 +127,9 @@ const ActionStatusBubble = memo(({ action, result }: { action: Action; result: A
         <span className={cn("font-medium", cfg.color)}>{actionLabel}</span>
       </div>
       <div className="flex items-center space-x-2 ml-7">
-        <span className="text-xs text-slate-400">{cfg.label}</span>
-        {result.error && <span className="text-xs text-rose-400">· {result.error}</span>}
-        {result.attempts > 1 && <span className="text-xs text-slate-400">· ({result.attempts} attempts)</span>}
+        <span className="text-xs text-chalo-text-muted">{cfg.label}</span>
+        {result.error && <span className="text-xs text-chalo-error">· {result.error}</span>}
+        {result.attempts > 1 && <span className="text-xs text-chalo-text-muted">· ({result.attempts} attempts)</span>}
       </div>
     </div>
   );
@@ -211,25 +211,24 @@ const BubbleRenderer = memo(({
 
 // --- MAIN DRAWER COMPONENT ---
 
-// Typing indicator using CSS animations (no JS thread cost)
 const TypingIndicator = memo(() => (
-  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex items-center space-x-1">
+  <div className="bg-chalo-surface border border-chalo-border-subtle rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex items-center space-x-1">
     <div
-      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
       style={{
         animation: 'typingBounce 0.6s ease-in-out infinite',
         animationDelay: '0ms',
       }}
     />
     <div
-      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
       style={{
         animation: 'typingBounce 0.6s ease-in-out infinite',
         animationDelay: '200ms',
       }}
     />
     <div
-      className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+      className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
       style={{
         animation: 'typingBounce 0.6s ease-in-out infinite',
         animationDelay: '400ms',
@@ -366,14 +365,14 @@ export function SmartDrawer({ className }: { className?: string }) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="h-screen w-100 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]"
+            className="h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col shrink-0 z-[60]"
           >
             <div className="p-6 flex flex-col items-center text-center space-y-4">
-              <div className="p-4 bg-amber-500/10 rounded-2xl">
-                <RotateCcw size={32} className="text-amber-500" />
+              <div className="p-4 bg-chalo-warning-light rounded-2xl">
+                <RotateCcw size={32} className="text-chalo-warning" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Resume Tour?</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <h3 className="text-lg font-bold text-chalo-text">Resume Tour?</h3>
+              <p className="text-sm text-chalo-text-secondary">
                 You were taking the <strong>{mission.title}</strong> tour. Would you like to continue where you left off?
               </p>
               <div className="flex flex-col w-full space-y-2 pt-2">
@@ -384,14 +383,14 @@ export function SmartDrawer({ className }: { className?: string }) {
                       store.goToStep(incompleteTour.lastStepId);
                     }
                   }}
-                  className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center space-x-2"
+                  className="w-full py-3 rounded-xl bg-chalo-primary text-chalo-text-inverse font-semibold hover:bg-chalo-primary-hover shadow-lg shadow-chalo-primary/20 transition-all flex items-center justify-center space-x-2"
                 >
                   <RotateCcw size={16} />
                   <span>Resume Tour</span>
                 </button>
                 <button
                   onClick={() => store.recordTourEntry(incompleteTour.missionId, incompleteTour.lastStepId, true)}
-                  className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm"
+                  className="w-full py-3 rounded-xl border border-chalo-border text-chalo-text-secondary font-medium hover:bg-chalo-surface-subtle transition-all text-sm"
                 >
                   Dismiss
                 </button>
@@ -414,25 +413,25 @@ export function SmartDrawer({ className }: { className?: string }) {
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              'h-screen w-100 overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col shrink-0 z-[60]',
+              'h-screen w-100 overflow-hidden bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col shrink-0 z-[60]',
               className
             )}
           >
             {/* Chat Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 backdrop-blur-sm z-10 shrink-0">
+            <div className="p-5 border-b border-chalo-border flex items-center justify-between bg-chalo-surface-subtle/50 backdrop-blur-sm z-10 shrink-0">
               <div className="flex items-center space-x-3 overflow-hidden">
                 <div className="relative shrink-0">
-                  <div className="p-2 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                  <div className="p-2 bg-chalo-primary rounded-xl text-white shadow-lg shadow-chalo-primary/30">
                     <Bot size={20} />
                   </div>
-                  <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                  <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-chalo-success border-2 border-chalo-surface rounded-full" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">Chalo Guide</h2>
-                  <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">{activeMission.title}</p>
+                  <h2 className="text-sm font-bold text-chalo-text leading-tight truncate">Chalo Guide</h2>
+                  <p className="text-[11px] font-semibold text-chalo-text-secondary truncate">{activeMission.title}</p>
                 </div>
               </div>
-              <button className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors shrink-0" onClick={handleDismiss}>
+              <button className="p-2 hover:bg-chalo-surface-muted rounded-lg text-chalo-text-secondary transition-colors shrink-0" onClick={handleDismiss}>
                 <X size={18} />
               </button>
             </div>
@@ -451,8 +450,8 @@ export function SmartDrawer({ className }: { className?: string }) {
                     <div className={cn(
                       "max-w-[85%] rounded-2xl p-4 text-sm shadow-sm will-change-transform",
                       msg.role === 'user'
-                        ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-tr-sm"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700 rounded-tl-sm"
+                        ? "bg-chalo-text text-chalo-text-inverse rounded-tr-sm"
+                        : "bg-chalo-surface text-chalo-text-secondary border border-chalo-border-subtle rounded-tl-sm"
                     )}>
                       {msg.content}
                     </div>
@@ -512,7 +511,7 @@ export function SmartDrawer({ className }: { className?: string }) {
                       {executionContext.isRunning && (
                         <button
                           onClick={cancelExecution}
-                          className="flex items-center space-x-1 text-xs text-rose-500 hover:text-rose-600 font-medium ml-2 mt-1"
+                          className="flex items-center space-x-1 text-xs text-chalo-error hover:text-chalo-error/80 font-medium ml-2 mt-1"
                         >
                           <XCircle size={12} />
                           <span>Cancel execution</span>
@@ -525,24 +524,24 @@ export function SmartDrawer({ className }: { className?: string }) {
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+            <div className="p-4 bg-chalo-surface border-t border-chalo-border shrink-0">
               <div className="flex items-center justify-between space-x-2">
                 <button
                   onClick={handlePrev}
                   disabled={activeMission.steps.indexOf(currentStep) === 0}
-                  className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition-colors"
+                  className="p-3 text-chalo-text-muted hover:text-chalo-text disabled:opacity-30 transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
-                <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-3 flex items-center overflow-hidden">
-                  <span className="text-sm text-slate-400 flex-1 truncate">
+                <div className="flex-1 bg-chalo-surface-muted rounded-xl px-4 py-3 flex items-center overflow-hidden">
+                  <span className="text-sm text-chalo-text-muted flex-1 truncate">
                     {currentStep.targetField ? `Focusing on ${currentStep.targetField}...` : "Reading..."}
                   </span>
                 </div>
                 <button
                   onClick={handleNext}
                   disabled={(currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) || activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1}
-                  className={cn("p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50")}
+                  className={cn("p-3 bg-chalo-primary hover:bg-chalo-primary-hover text-chalo-text-inverse rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50")}
                 >
                   {activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1 ? <CheckCircle2 size={20} /> : <Send size={20} />}
                 </button>
