@@ -7,6 +7,7 @@ import {
   Action,
 } from '@osiloke/chalo';
 import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
+import { PortalDialog } from './PortalDialog';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import {
   LayoutDashboard,
@@ -296,6 +297,75 @@ const ACTION_ENGINE_MISSION: Mission = {
   ],
 };
 
+const PORTAL_DIALOG_MISSION: Mission = {
+  id: 'portal-dialog-demo',
+  title: 'Portal Dialog Test',
+  description: 'Tests SmartDrawer z-index behavior with portal-based dialogs',
+  allowCompletion: true,
+  steps: [
+    {
+      id: 'portal-intro',
+      title: 'Portal Dialog Test',
+      content: 'This test demonstrates the z-index issue when dialogs use portals. We\'ll open a portal dialog and see if the SmartDrawer stays on top.',
+      navigationRules: { canGoBack: false },
+    },
+    {
+      id: 'open-portal-dialog',
+      title: 'Open Portal Dialog',
+      content: 'Click the button below to open a portal-based dialog. The SmartDrawer should remain visible above it.',
+      targetElement: '#btn-open-portal',
+      actionSequence: [
+        {
+          id: 'click-portal',
+          type: 'click',
+          config: { selector: '#btn-open-portal' },
+          label: 'Open portal dialog',
+        },
+      ],
+      waitFor: {
+        type: 'custom',
+        predicate: () => !!document.getElementById('portal-dialog-root'),
+      },
+    },
+    {
+      id: 'portal-opened',
+      title: 'Dialog is Open',
+      content: 'The portal dialog is now open with z-[9999]. The SmartDrawer should still be visible on top. If it\'s behind the dialog, we need to make SmartDrawer use portals too.',
+      bubbles: [
+        { id: 'msg-portal-1', type: 'message', content: 'Can you see me? The SmartDrawer should be rendering ABOVE this portal dialog!' },
+        { id: 'msg-portal-2', type: 'message', content: 'If I\'m behind the dialog, check the SmartDrawer z-index. Portal dialogs often use z-[9999] or higher.' },
+        {
+          id: 'act-portal-1', type: 'action-group', actions: [
+            { label: 'I can see the drawer', type: 'next' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'close-portal',
+      title: 'Close the Dialog',
+      content: 'Now let\'s close the portal dialog and continue.',
+      actionSequence: [
+        {
+          id: 'close-portal-dialog',
+          type: 'click',
+          config: { selector: '#btn-close-portal' },
+          label: 'Close portal dialog',
+        },
+      ],
+      waitFor: {
+        type: 'custom',
+        predicate: () => !document.getElementById('portal-dialog-root'),
+      },
+    },
+    {
+      id: 'portal-complete',
+      title: 'Test Complete! 🎉',
+      content: 'You\'ve completed the portal dialog test. If the SmartDrawer was visible above the portal, great! If not, we need to implement portal support.',
+    },
+  ],
+};
+
 // --- COMPONENTS ---
 
 interface DashboardCardProps {
@@ -346,6 +416,7 @@ export default function App() {
 
   const [dataType, setDataType] = useState<'realtime' | 'snapshots'>('realtime');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPortalDialogOpen, setIsPortalDialogOpen] = useState(false);
   const [createdProjects, setCreatedProjects] = useState<CreateProjectFormData[]>([]);
 
   const {
@@ -363,6 +434,7 @@ export default function App() {
     registerMission(DASHBOARD_TUTORIAL);
     registerMission(PRODUCT_TOUR_MISSION);
     registerMission(ACTION_ENGINE_MISSION);
+    registerMission(PORTAL_DIALOG_MISSION);
   }, [registerMission]);
 
   useEffect(() => {
@@ -390,6 +462,18 @@ export default function App() {
     btn?.setAttribute('data-clicked', 'true');
     // Advance tour past the "find button" step if we're on it
     if (currentStep?.id === 'find-create-btn') {
+      nextStep();
+    }
+  };
+
+  const handleOpenPortalDialog = () => {
+    setIsPortalDialogOpen(true);
+  };
+
+  const handleClosePortalDialog = () => {
+    setIsPortalDialogOpen(false);
+    // Advance tour if we're waiting for the dialog to close
+    if (currentStep?.id === 'close-portal') {
       nextStep();
     }
   };
@@ -492,6 +576,30 @@ export default function App() {
                     <div className="flex items-center space-x-3">
                       <Activity size={18} />
                       <span className="font-semibold text-slate-500">Action Engine Demo</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => startMission('portal-dialog-demo')}
+                    disabled={activeMission?.id === 'portal-dialog-demo'}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Sparkles size={18} />
+                      <span className="font-semibold text-slate-500">Portal Dialog Test</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                    id="btn-open-portal"
+                    onClick={handleOpenPortalDialog}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-600 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Sparkles size={18} />
+                      <span className="font-semibold">Open Portal Dialog</span>
                     </div>
                     <ChevronRight size={18} />
                   </button>
@@ -731,6 +839,29 @@ export default function App() {
         onSubmit={handleCreateProject}
         currentStepTarget={activeMission?.id === 'product-tour-create' ? currentStep?.targetField : undefined}
       />
+
+      {/* Portal Dialog (for testing z-index issues) */}
+      <PortalDialog
+        isOpen={isPortalDialogOpen}
+        onClose={handleClosePortalDialog}
+        title="Portal Dialog Test"
+      >
+        <div className="space-y-4">
+          <p className="text-slate-600 dark:text-slate-300">
+            This dialog is rendered in a portal at the end of <code className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-sm">document.body</code> with z-index <strong className="text-purple-600">z-[9999]</strong>.
+          </p>
+          <p className="text-slate-600 dark:text-slate-300">
+            The SmartDrawer should be visible above this dialog. If it's behind, we need to implement portal support in SmartDrawer.
+          </p>
+          <button
+            id="btn-close-portal"
+            onClick={handleClosePortalDialog}
+            className="w-full py-3 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700 shadow-lg transition-all"
+          >
+            Close Dialog
+          </button>
+        </div>
+      </PortalDialog>
     </div>
   );
 }

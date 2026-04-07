@@ -56,7 +56,7 @@ export function TargetHighlight({ selector, label, pulse = true }: TargetHighlig
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed pointer-events-none z-[9999]"
+        className="fixed pointer-events-none z-9999"
         style={{
           top: rect.top - padding,
           left: rect.left - padding,
