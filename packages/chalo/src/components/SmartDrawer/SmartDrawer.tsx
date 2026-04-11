@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useCallback, memo, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Bot, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle } from 'lucide-react';
+import { X, Send, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle, Compass } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSmartDrawer, type SmartDrawerState } from '../../hooks/use-smart-drawer';
@@ -315,15 +315,25 @@ export function SmartDrawerRoot({
 // --- HEADER ---
 
 export interface SmartDrawerHeaderProps {
-  /** Override mission title */
+  /** Override mission title (sub-header) */
   title?: string;
+  /** Main header title (e.g. "Chalo Guide") */
+  headerTitle?: string;
+  /** Custom icon for the header */
+  icon?: React.ElementType;
   /** Custom className */
   className?: string;
   /** Custom dismiss handler */
   onDismiss?: () => void;
 }
 
-export function SmartDrawerHeader({ title, className, onDismiss }: SmartDrawerHeaderProps) {
+export function SmartDrawerHeader({
+  title,
+  headerTitle = "Chalo Guide",
+  icon: Icon = Compass,
+  className,
+  onDismiss
+}: SmartDrawerHeaderProps) {
   const { activeMission, dismiss } = useSmartDrawerContext();
   const handleDismiss = onDismiss || dismiss;
 
@@ -332,12 +342,12 @@ export function SmartDrawerHeader({ title, className, onDismiss }: SmartDrawerHe
       <div className="flex items-center space-x-3 overflow-hidden">
         <div className="relative shrink-0">
           <div className="p-2 bg-chalo-primary rounded-xl text-white shadow-lg shadow-chalo-primary/30">
-            <Bot size={20} />
+            <Icon size={20} />
           </div>
           <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-chalo-success border-2 border-chalo-surface rounded-full" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-chalo-text leading-tight truncate">Chalo Guide</h2>
+          <h2 className="text-sm font-bold text-chalo-text leading-tight truncate">{headerTitle}</h2>
           <p className="text-[11px] font-semibold text-chalo-text-secondary truncate">
             {title || activeMission?.title}
           </p>
@@ -647,6 +657,12 @@ export function SmartDrawerTrigger({ children, className }: SmartDrawerTriggerPr
 export interface SmartDrawerProps {
   /** Custom className for drawer panel */
   className?: string;
+  /** Main header title */
+  headerTitle?: string;
+  /** Mission title (sub-header) */
+  title?: string;
+  /** Header icon */
+  icon?: React.ElementType;
 }
 
 /**
@@ -662,11 +678,20 @@ export interface SmartDrawerProps {
  *
  * Or use the `useSmartDrawer` hook for full control.
  */
-export function SmartDrawer({ className }: SmartDrawerProps) {
+export function SmartDrawer({
+  className,
+  headerTitle,
+  title,
+  icon
+}: SmartDrawerProps) {
   return (
     <>
       <SmartDrawerRoot className={className}>
-        <SmartDrawerHeader />
+        <SmartDrawerHeader
+          headerTitle={headerTitle}
+          title={title}
+          icon={icon}
+        />
         <SmartDrawerBody />
         <SmartDrawerFooter />
       </SmartDrawerRoot>
