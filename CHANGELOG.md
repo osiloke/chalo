@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/osiloke/chalo/compare/v1.2.0...v1.3.0) (2026-04-11)
+
+
+### Features
+
+* add configurable header title and icon to SmartDrawer component ([a0d41b1](https://github.com/osiloke/chalo/commit/a0d41b1a8f25af90461585aaf726c0ceaeec783b))
+
 # [1.2.0](https://github.com/osiloke/chalo/compare/v1.1.1...v1.2.0) (2026-04-06)
 
 
