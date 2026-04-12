@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/osiloke/chalo/compare/v1.6.0...v1.7.0) (2026-04-12)
+
+
+### Features
+
+* add plain inputs demo mission for non-RHF usage ([40a1fe1](https://github.com/osiloke/chalo/commit/40a1fe10bb21d9b63fa20739bb2d3052c0583d00))
+
 # [1.6.0](https://github.com/osiloke/chalo/compare/v1.5.0...v1.6.0) (2026-04-12)
 
 
