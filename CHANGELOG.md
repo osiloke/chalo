@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/osiloke/chalo/compare/v1.4.0...v1.5.0) (2026-04-12)
+
+
+### Features
+
+* implement action sequence execution in SmartDrawer and add comprehensive mission creation documentation ([d6ec4cd](https://github.com/osiloke/chalo/commit/d6ec4cdbc2381d4e44892329fea49813665f3c8b))
+
 # [1.4.0](https://github.com/osiloke/chalo/compare/v1.3.0...v1.4.0) (2026-04-12)
 
 
