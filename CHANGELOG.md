@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/osiloke/chalo/compare/v1.5.0...v1.6.0) (2026-04-12)
+
+
+### Features
+
+* add Tailwind v4 source directive to scan compiled component files ([6f09f7d](https://github.com/osiloke/chalo/commit/6f09f7d5179510d616f0fbf498725e478a83a881))
+
 # [1.5.0](https://github.com/osiloke/chalo/compare/v1.4.0...v1.5.0) (2026-04-12)
 
 
