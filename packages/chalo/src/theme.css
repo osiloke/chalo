@@ -15,6 +15,10 @@
  * - Apps can force light mode with class="light"
  */
 
+/* Tell Tailwind v4 to scan source/dist files for class names used in components */
+@source "../src/**/*.tsx";
+@source "../dist/**/*.mjs";
+
 @theme {
   /* Primary action color (buttons, links, focus rings) */
   --color-chalo-primary: #6366f1;

@@ -18,7 +18,8 @@
         "default": "./dist/chalo.cjs"
       }
     },
-    "./theme.css": "./src/theme.css"
+    "./theme.css": "./src/theme.css",
+    "./theme.dist.css": "./dist/theme.css"
   },
   "files": [
     "dist",
@@ -53,8 +54,9 @@
     "zustand": ">=5.0.0"
   },
   "scripts": {
-    "build": "npm run build:types && vite build && npm run copy:types",
+    "build": "npm run build:types && npm run build:css && vite build && npm run copy:types",
     "build:types": "tsc --project tsconfig.json",
+    "build:css": "npx @tailwindcss/cli --input ./src/theme.css --output ./dist/theme.dist.css --minify",
     "copy:types": "cp dist/types/index.d.ts dist/types/index.d.mts",
     "dev": "npm run build:types && vite build --watch",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --config ../../.eslintrc.cjs",
@@ -88,6 +90,7 @@
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.72.1",
     "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
     "vitest": "^1.6.0",

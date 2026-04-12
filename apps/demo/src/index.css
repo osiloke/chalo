@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "@osiloke/chalo/theme.css";
 
-@source "../../../packages/chalo/src";
-
 /* Override Chalo theme vars here to match your brand */
 /* @theme {
   --color-chalo-primary: #your-color;
