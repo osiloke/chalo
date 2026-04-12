@@ -1,3 +1,21 @@
+# [2.0.0](https://github.com/osiloke/chalo/compare/v1.8.0...v2.0.0) (2026-04-12)
+
+
+### Code Refactoring
+
+* **chalo:** tighten updateField status type ([329de1c](https://github.com/osiloke/chalo/commit/329de1cb853d207c1c07b1152bd48430dfb10fa1))
+
+
+### Features
+
+* **engine:** sync resolved fill_field values with store and form ([1878d76](https://github.com/osiloke/chalo/commit/1878d7612b21aa97b02ab6258e0e8f9820e186ae))
+
+
+### BREAKING CHANGES
+
+* **chalo:** all callers of updateField now need to provide a status
+value from the accepted union type.
+
 # [1.8.0](https://github.com/osiloke/chalo/compare/v1.7.0...v1.8.0) (2026-04-12)
 
 
