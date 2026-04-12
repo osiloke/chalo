@@ -161,9 +161,18 @@ const BubbleRenderer = memo(({
       onFill(d.field, d.value);
       onInteraction(`Auto-filled ${d.field} with ${d.value}`);
     } else if (a.type === 'click' && a.data) {
-      const d = a.data as { selector: string };
-      const el = document.querySelector(d.selector);
-      if (el) { (el as HTMLElement).click(); onInteraction(`Clicked: ${d.selector}`); }
+      const d = a.data as { selector?: string; field?: string };
+      const targetSelector = d.field 
+        ? `[data-chalo-field="${d.field}"], #chalo-${d.field}` 
+        : d.selector;
+      
+      if (targetSelector) {
+        const el = document.querySelector(targetSelector);
+        if (el) { 
+          (el as HTMLElement).click(); 
+          onInteraction(`Clicked: ${targetSelector}`); 
+        }
+      }
     } else if (a.onClick) {
       a.onClick();
       onInteraction(`Performed action: ${a.label}`);
