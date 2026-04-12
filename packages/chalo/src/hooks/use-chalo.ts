@@ -462,13 +462,14 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   // registerElement: attribute a ref callback that sets data-chalo-field on any
   // DOM element (buttons, links, etc.) so action engine can target it by name.
   const registerElement = useCallback((name: string) => {
+    log('registerElement', { name });
     return (el: HTMLElement | null) => {
       if (el) {
         el.setAttribute('data-chalo-field', name);
         el.id = el.id || `chalo-${name}`;
       }
     };
-  }, []);
+  }, [log]);
 
   return {
     activeMissionId,

@@ -8,6 +8,7 @@ import {
 } from '@osiloke/chalo';
 import { CreateProjectModal, type CreateProjectFormData } from './CreateProjectModal';
 import { PortalDialog } from './PortalDialog';
+import { PlainFields } from './PlainFields';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import {
   LayoutDashboard,
@@ -366,6 +367,92 @@ const PORTAL_DIALOG_MISSION: Mission = {
   ],
 };
 
+const PLAIN_INPUTS_MISSION: Mission = {
+  id: 'plain-inputs-demo',
+  title: 'Plain HTML Inputs (No RHF)',
+  description: 'Demonstrates Chalo working with regular HTML inputs without react-hook-form.',
+  allowCompletion: true,
+  steps: [
+    {
+      id: 'plain-intro',
+      title: 'Plain Inputs Demo',
+      content: 'This section shows how Chalo works with regular HTML inputs — no react-hook-form required. The form below uses basic controlled components synced to the Chalo store.',
+      navigationRules: { canGoBack: false },
+    },
+    {
+      id: 'fill-server',
+      title: 'Server Name',
+      content: 'Enter a server name in the input below. You can type manually or use auto-fill.',
+      targetField: 'serverName',
+      bubbles: [
+        { id: 'inp-server', type: 'input', targetField: 'serverName' },
+        {
+          id: 'act-server', type: 'action-group', actions: [
+            { label: 'Auto-fill: prod-server-01', type: 'fill_field', data: { field: 'serverName', value: 'prod-server-01' } },
+          ],
+        },
+      ],
+      waitFor: { type: 'field_touched', field: 'serverName' },
+    },
+    {
+      id: 'fill-region-plain',
+      title: 'Select Region',
+      content: 'Choose a deployment region from the dropdown.',
+      targetField: 'deployRegion',
+      bubbles: [
+        {
+          id: 'sel-plain-region', type: 'select', targetField: 'deployRegion',
+          options: [
+            { label: 'US East', value: 'us-east' },
+            { label: 'EU West', value: 'eu-west' },
+            { label: 'Asia Pacific', value: 'ap-south' },
+          ],
+        },
+        {
+          id: 'act-plain-region', type: 'action-group', actions: [
+            { label: 'Auto-fill: EU West', type: 'fill_field', data: { field: 'deployRegion', value: 'eu-west' } },
+          ],
+        },
+      ],
+      waitFor: { type: 'field_touched', field: 'deployRegion' },
+    },
+    {
+      id: 'fill-cores',
+      title: 'CPU Cores',
+      content: 'Set the number of CPU cores for this deployment.',
+      targetField: 'cpuCores',
+      bubbles: [
+        { id: 'inp-cores', type: 'input', targetField: 'cpuCores' },
+        {
+          id: 'act-cores', type: 'action-group', actions: [
+            { label: 'Auto-fill: 8', type: 'fill_field', data: { field: 'cpuCores', value: 8 } },
+          ],
+        },
+      ],
+      waitFor: { type: 'field_touched', field: 'cpuCores' },
+    },
+    {
+      id: 'submit-plain',
+      title: 'Deploy Server',
+      content: 'Click "Deploy Server" to submit. The values are tracked in the Chalo store even without react-hook-form.',
+      targetField: 'deploy-btn',
+      bubbles: [
+        {
+          id: 'act-deploy', type: 'action-group', actions: [
+            { label: 'Deploy for me', type: 'click', data: { field: 'deploy-btn' } },
+          ],
+        },
+      ],
+      waitFor: { type: 'custom', predicate: () => !!document.querySelector('#deploy-status') },
+    },
+    {
+      id: 'plain-complete',
+      title: 'Plain Inputs Complete! 🎉',
+      content: 'You\'ve successfully used Chalo with plain HTML inputs. The store tracked all your values without any form library!',
+    },
+  ],
+};
+
 // --- COMPONENTS ---
 
 interface DashboardCardProps {
@@ -418,6 +505,7 @@ export default function App() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPortalDialogOpen, setIsPortalDialogOpen] = useState(false);
   const [createdProjects, setCreatedProjects] = useState<CreateProjectFormData[]>([]);
+  const [deployStatus, setDeployStatus] = useState<string | null>(null);
 
   const {
     registerMission,
@@ -435,6 +523,7 @@ export default function App() {
     registerMission(PRODUCT_TOUR_MISSION);
     registerMission(ACTION_ENGINE_MISSION);
     registerMission(PORTAL_DIALOG_MISSION);
+    registerMission(PLAIN_INPUTS_MISSION);
   }, [registerMission]);
 
   useEffect(() => {
@@ -474,6 +563,14 @@ export default function App() {
     setIsPortalDialogOpen(false);
     // Advance tour if we're waiting for the dialog to close
     if (currentStep?.id === 'close-portal') {
+      nextStep();
+    }
+  };
+
+  const handlePlainDeploy = (data: { serverName: string; deployRegion: string; cpuCores: number }) => {
+    console.log('Plain Deploy:', data);
+    setDeployStatus(`Deployed ${data.serverName} to ${data.deployRegion} with ${data.cpuCores} cores`);
+    if (activeMission?.id === 'plain-inputs-demo') {
       nextStep();
     }
   };
@@ -593,6 +690,18 @@ export default function App() {
                   </button>
 
                   <button
+                    onClick={() => startMission('plain-inputs-demo')}
+                    disabled={activeMission?.id === 'plain-inputs-demo'}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Terminal size={18} />
+                      <span className="font-semibold text-slate-500">Plain Inputs (No RHF)</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
                     id="btn-open-portal"
                     onClick={handleOpenPortalDialog}
                     className="w-full flex items-center justify-between p-4 rounded-2xl bg-purple-600 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 active:scale-95 transition-all"
@@ -673,6 +782,26 @@ export default function App() {
                     <span>Initialize Workspace</span>
                   </button>
                 </form>
+              </section>
+
+              {/* Plain Inputs Form (No RHF) */}
+              <section className="glass p-8 rounded-3xl border-0 shadow-xl">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center space-x-2">
+                  <Terminal size={20} className="text-cyan-500" />
+                  <span>Plain Inputs (No React Hook Form)</span>
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Regular HTML inputs synced manually to the Chalo store.</p>
+
+                <PlainFields
+                  currentStepTarget={activeMission?.id === 'plain-inputs-demo' ? currentStep?.targetField : undefined}
+                  onDeploy={handlePlainDeploy}
+                />
+
+                {deployStatus && (
+                  <div id="deploy-status" className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <p className="text-xs font-mono text-emerald-600 dark:text-emerald-400">{deployStatus}</p>
+                  </div>
+                )}
               </section>
 
               {/* Created Projects (from product tour) */}
