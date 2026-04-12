@@ -9,7 +9,7 @@ This guide describes the complete process of defining a `Mission` in Chalo. It g
 
 ## 1. Defining a Mission and Steps
 
-A `Mission` is a declarative, state-machine-like JSON configuration defining a multi-step guided experience. 
+A `Mission` is a declarative, state-machine-like JSON configuration defining a multi-step guided experience.
 
 ### Mission Structure
 ```typescript
@@ -35,31 +35,31 @@ const step: Step = {
   id: 'welcome_step',
   title: 'Getting Started',
   content: 'Follow the glowing element.', // Shown in the Drawer
-  
+
   // Highlighting: For registered elements, prefer using the auto-generated #chalo-<fieldName> id
   // or [data-chalo-field="<fieldName>"] instead of raw DOM id selectors.
-  targetElement: '#chalo-dashboard', 
-  
+  targetElement: '#chalo-dashboard',
+
   targetField: 'userName', // Pre-focuses this field and syncs its state
-  
+
   // Gate: Auto-advance automatically AFTER this condition becomes true
   waitFor: {
     type: 'element_exists',
     field: 'my_button' // References the element created via registerElement('my_button')
   },
-  
+
   // Gate: Only execute actionSequence if this condition is true
   condition: {
     type: 'field_value',
     field: 'isNewUser',
     value: true
   },
-  
+
   // Actions: Automation engine side-effects triggered when step is reached
   actionSequence: [ /* ... Actions ... */ ],
-  
+
   // Interactive UI embedded in the drawer
-  bubbles: [ /* ... Bubbles ... */ ] 
+  bubbles: [ /* ... Bubbles ... */ ]
 };
 ```
 
@@ -73,7 +73,7 @@ Instead of relying on fragile CSS selectors, Actions natively understand the `fi
 
 - **`click`**: Simulates a native click on a DOM element. Supports both `config: { field: "my_button" }` (preferred for registered elements) and `config: { selector: ".my-class" }`.
 - **`scroll`**: Smoothly scrolls the registered element (e.g. `config: { field: "results-container" }`) into center view and **highlights it briefly** with a blue outline to immediately grab user attention.
-- **`fill_field`**: Updates state variables and forcefully sets the native DOM element's value using its `field` ID, dispatching `input` and `change` events so React/Vue/vanilla apps catch the update.
+- **`fill_field`**: Updates state variables and forcefully sets the native DOM element's value using its `field` ID, dispatching `input` and `change` events so React/Vue/vanilla apps catch the update. The `value` can be a literal, a field reference (`{ type: 'ref', field: 'sourceField' }`), or a function (`{ type: 'fn', generator: () => value }`). See **Dynamic Field Values** below.
 - **`api_call`**: Initiates a `fetch` request (`url`, `method`, `headers`, `body`).
 - **`wait`**: Suspends the execution pipeline for `durationMs`.
 - **`navigate`**: Pushes state to `window.history` and fires a `popstate` event for client-side routers.
@@ -90,10 +90,10 @@ actionSequence: [
     id: 'fetch-data',
     type: 'api_call',
     config: { url: '/api/init' },
-    retry: { 
-      maxAttempts: 3, 
-      backoff: 'exponential', 
-      delayMs: 500 
+    retry: {
+      maxAttempts: 3,
+      backoff: 'exponential',
+      delayMs: 500
     }
   },
   {
@@ -130,7 +130,7 @@ waitFor: {
 To make conditions and actions work, elements must be annotated.
 
 ### Forms and State Synchronization (react-hook-form)
-If you are using `react-hook-form`, `useChalo` can automatically orchestrate bidirectional synchronization. 
+If you are using `react-hook-form`, `useChalo` can automatically orchestrate bidirectional synchronization.
 
 1. Drawer inputs sync to the store.
 2. The store syncs to your App's Form.
@@ -149,7 +149,7 @@ function MyForm() {
     <form>
       {/* registerField provides name, id, data-chalo-field, onChange, onBlur, onFocus */}
       <input placeholder="Name" {...registerField('userName')} />
-      
+
       {/* registerElement injects data-chalo-field for the action-engine to target via 'click'/'scroll' */}
       <button ref={registerElement('submit-btn')} type="submit">
         Submit
@@ -185,6 +185,88 @@ When defining actions within an `action-group` bubble, the following types are a
 | `trigger_action` | `Action[]` | **Powerful**: Triggers a sequence of Action Engine steps (scroll, wait, etc.). |
 | `custom` | N/A | Triggers the `onClick` handler provided in the action object. |
 
+### Dynamic Field Values in `fill_field`
+
+The `fill_field` action (both in `actionSequence` and bubble `data`) supports **dynamic value resolution** via the `FieldValueSource` type. This enables two powerful patterns:
+
+#### 1. Reference Another Field's Value
+
+Use `{ type: 'ref', field: 'sourceField' }` to copy the value of a previously filled field. This is useful for confirmation fields, derived values, or multi-step forms where data flows between fields.
+
+```typescript
+actionSequence: [
+  {
+    id: 'fill-email',
+    type: 'fill_field',
+    config: { field: 'email', value: 'user@example.com' }
+  },
+  {
+    id: 'confirm-email',
+    type: 'fill_field',
+    config: {
+      field: 'confirmEmail',
+      value: { type: 'ref', field: 'email' }  // copies the email value
+    }
+  }
+]
+```
+
+#### 2. Generate Values with Functions
+
+Use `{ type: 'fn', generator: () => value }` to compute values at execution time. This is ideal for passwords, timestamps, UUIDs, random data, or any value that must be computed dynamically.
+
+```typescript
+actionSequence: [
+  {
+    id: 'gen-password',
+    type: 'fill_field',
+    config: {
+      field: 'password',
+      value: { type: 'fn', generator: () => crypto.randomUUID() }
+    }
+  },
+  {
+    id: 'confirm-password',
+    type: 'fill_field',
+    config: {
+      field: 'confirmPassword',
+      value: { type: 'ref', field: 'password' }  // reuses the generated value
+    }
+  }
+]
+```
+
+#### 3. Works in Bubble Actions Too
+
+```typescript
+bubbles: [
+  {
+    id: 'b1',
+    type: 'action-group',
+    actions: [
+      {
+        label: 'Auto-fill password',
+        type: 'fill_field',
+        data: {
+          field: 'password',
+          value: { type: 'fn', generator: () => generateStrongPassword() }
+        }
+      },
+      {
+        label: 'Copy to confirmation',
+        type: 'fill_field',
+        data: {
+          field: 'confirmPassword',
+          value: { type: 'ref', field: 'password' }
+        }
+      }
+    ]
+  }
+]
+```
+
+> **Important:** Field references (`type: 'ref'`) read from the execution context (`ctx.variables`), so the referenced field must have been filled in a prior action within the same sequence. Function values (`type: 'fn'`) are evaluated once at execution time and the result is stored for later reference.
+
 ### Example implementation
 
 ```typescript
@@ -206,9 +288,15 @@ bubbles: [
     type: 'action-group',
     actions: [
       { label: 'Auto-Fill', type: 'fill_field', data: { field: 'userName', value: 'John' } },
-      { 
-        label: 'Auto-Fill & Submit', 
-        type: 'trigger_action', 
+      // Dynamic value: copy userName from a previously filled field
+      {
+        label: 'Copy Name',
+        type: 'fill_field',
+        data: { field: 'displayName', value: { type: 'ref', field: 'userName' } }
+      },
+      {
+        label: 'Auto-Fill & Submit',
+        type: 'trigger_action',
         data: [
           { id: 'f1', type: 'fill_field', config: { field: 'userName', value: 'John' } },
           { id: 'w1', type: 'wait', config: { durationMs: 400 } },

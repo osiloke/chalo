@@ -152,6 +152,51 @@ bubbles: [
 ]
 ```
 
+### Dynamic Field Values
+
+The `fill_field` action supports **dynamic value resolution** — you can reference other fields or generate values with functions:
+
+```tsx
+actionSequence: [
+  // Fill with a function-generated value
+  {
+    id: 'gen-password',
+    type: 'fill_field',
+    config: {
+      field: 'password',
+      value: { type: 'fn', generator: () => generateSecurePassword() }
+    }
+  },
+  // Reference another field's value
+  {
+    id: 'confirm-password',
+    type: 'fill_field',
+    config: {
+      field: 'confirmPassword',
+      value: { type: 'ref', field: 'password' }
+    }
+  }
+]
+```
+
+This also works in bubble `fill_field` actions:
+
+```tsx
+{
+  label: 'Copy email to confirm',
+  type: 'fill_field',
+  data: {
+    field: 'confirmEmail',
+    value: { type: 'ref', field: 'email' }
+  }
+}
+```
+
+Supported `FieldValueSource` types:
+- `{ type: 'literal', value: 'static' }` — explicit literal (default behavior)
+- `{ type: 'ref', field: 'fieldName' }` — copies value from another field in the execution context
+- `{ type: 'fn', generator: () => value }` — calls the function at execution time
+
 ### 4. Register and Start
 
 ```tsx
