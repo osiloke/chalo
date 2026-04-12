@@ -129,7 +129,30 @@ const onboardingMission: Mission = {
 };
 ```
 
-### 3. Register and Start
+### 3. Conversational Actions (Bubbles)
+
+Bubbles can trigger complex UI automations. Use `trigger_action` to run an array of actions (scroll, wait, fill, click) directly from a chat button.
+
+```tsx
+bubbles: [
+  {
+    type: 'action-group',
+    actions: [
+      {
+        label: 'Auto-Complete Form',
+        type: 'trigger_action',
+        data: [
+          { id: 'f1', type: 'fill_field', config: { field: 'name', value: 'John' } },
+          { id: 'w1', type: 'wait', config: { durationMs: 400 } },
+          { id: 'c1', type: 'click', config: { field: 'submit-btn' } }
+        ]
+      }
+    ]
+  }
+]
+```
+
+### 4. Register and Start
 
 ```tsx
 import { useChalo } from 'chalo';

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useChaloStore } from '../store';
 import { useChalo } from './use-chalo';
-import { StepAction } from '../types';
+import { StepAction, Action } from '../types';
 
 export interface ChatMessage {
   id: string;
@@ -63,6 +63,7 @@ export interface SmartDrawerState {
     nextStep: () => void;
     prevStep: () => void;
     cancelExecution: () => void;
+    executeActionSequence: (actions: Action[]) => void;
     handleBubbleInteraction: (text: string) => void;
     handleLegacyAction: (action: StepAction) => void;
   };
@@ -99,7 +100,8 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     fieldErrors, 
     fieldValues, 
     executionContext, 
-    cancelExecution 
+    cancelExecution,
+    executeActionSequence
   } = useChalo({ debug: options.debug ?? import.meta.env.DEV });
 
   const typingDelay = options.typingDelay ?? 1200;
@@ -206,11 +208,15 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
         (el as HTMLElement).click();
         store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
       }
+    } else if (action.type === 'trigger_action' && action.data) {
+      const actions = Array.isArray(action.data) ? action.data : [action.data];
+      executeActionSequence(actions, currentStep.id);
+      store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
     } else if (action.onClick) {
       action.onClick();
       store.addInteraction(currentStep.id, `Selected: ${action.label}`);
     }
-  }, [fillField, currentStep?.id, store]);
+  }, [fillField, currentStep, store, executeActionSequence]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
@@ -243,6 +249,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       nextStep,
       prevStep,
       cancelExecution,
+      executeActionSequence,
       handleBubbleInteraction,
       handleLegacyAction,
     },

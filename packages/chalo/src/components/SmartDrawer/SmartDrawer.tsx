@@ -146,6 +146,7 @@ const BubbleRenderer = memo(({
   onFill,
   onNext,
   onPrev,
+  onExecuteSequence,
   onInteraction
 }: {
   bubble: BubbleType;
@@ -153,6 +154,7 @@ const BubbleRenderer = memo(({
   onFill: (f: string, v: unknown) => void;
   onNext: () => void;
   onPrev: () => void;
+  onExecuteSequence: (actions: Action[]) => void;
   onInteraction: (text: string) => void;
 }) => {
   const handleAction = useCallback((a: StepAction) => {
@@ -173,13 +175,17 @@ const BubbleRenderer = memo(({
           onInteraction(`Clicked: ${targetSelector}`); 
         }
       }
+    } else if (a.type === 'trigger_action' && a.data) {
+      const actions = Array.isArray(a.data) ? a.data : [a.data];
+      onExecuteSequence(actions as Action[]);
+      onInteraction(`Triggered action sequence: ${a.label}`);
     } else if (a.onClick) {
       a.onClick();
       onInteraction(`Performed action: ${a.label}`);
     } else {
       onInteraction(`Clicked: ${a.label}`);
     }
-  }, [onFill, onInteraction]);
+  }, [onFill, onExecuteSequence, onInteraction]);
 
   const handleInputChange = useCallback((v: unknown) => {
     onFill(bubble.targetField!, v);
@@ -411,6 +417,7 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
       onFill={actions.fillField}
       onNext={actions.nextStep}
       onPrev={actions.prevStep}
+      onExecuteSequence={actions.executeActionSequence}
       onInteraction={actions.handleBubbleInteraction}
     />
   ), [fieldValues, actions]);
