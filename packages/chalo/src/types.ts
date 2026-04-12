@@ -123,7 +123,7 @@ export interface ExecutionContext {
   isRunning: boolean;
   currentActionId: string | null;
   /** Optional callback to sync field values with the store/form (set by store before execution) */
-  updateField?: (name: string, value: unknown, status?: string) => void;
+  updateField?: (name: string, value: unknown, status?: 'idle' | 'focused' | 'valid' | 'invalid') => void;
 }
 
 // Handler function signature for custom actions
