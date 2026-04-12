@@ -1,6 +1,6 @@
 {
   "name": "@osiloke/chalo",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A modern React component library for intelligent UI interactions and guided experiences",
   "type": "module",
   "private": false,

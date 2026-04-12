@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/osiloke/chalo/compare/v1.3.0...v1.4.0) (2026-04-12)
+
+
+### Features
+
+* update click action to support field-based selectors and add mission creation documentation ([9970c8b](https://github.com/osiloke/chalo/commit/9970c8b56ea48f7e04b1bf8b1c3a0376e49dcb40))
+
 # [1.3.0](https://github.com/osiloke/chalo/compare/v1.2.0...v1.3.0) (2026-04-11)
 
 
