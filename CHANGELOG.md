@@ -1,3 +1,5 @@
+## [2.0.1](https://github.com/osiloke/chalo/compare/v2.0.0...v2.0.1) (2026-04-12)
+
 # [2.0.0](https://github.com/osiloke/chalo/compare/v1.8.0...v2.0.0) (2026-04-12)
 
 
