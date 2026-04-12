@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/osiloke/chalo/compare/v1.7.0...v1.8.0) (2026-04-12)
+
+
+### Features
+
+* **engine:** add dynamic resolver for fill_field values ([93796b8](https://github.com/osiloke/chalo/commit/93796b86a0eb56c474a4591ae31a633da95daf50))
+
 # [1.7.0](https://github.com/osiloke/chalo/compare/v1.6.0...v1.7.0) (2026-04-12)
 
 
