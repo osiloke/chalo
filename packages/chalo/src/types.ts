@@ -40,9 +40,24 @@ export interface ScrollActionConfig {
   behavior?: 'smooth' | 'instant';
 }
 
+export type FieldValueSource =
+  | { type: 'literal'; value: unknown }
+  | { type: 'ref'; field: string }
+  | { type: 'fn'; generator: () => unknown };
+
 export interface FillFieldActionConfig {
   field: string;
-  value: unknown;
+  /**
+   * Value to fill. Can be:
+   * - A literal value (string, number, etc.)
+   * - A FieldValueSource object for dynamic resolution
+   *
+   * Examples:
+   *   value: "static text"                              // literal
+   *   value: { type: 'ref', field: 'password' }         // reference another field
+   *   value: { type: 'fn', generator: () => uuid() }    // function-generated
+   */
+  value: unknown | FieldValueSource;
 }
 
 export interface ApiCallActionConfig {

@@ -4,11 +4,26 @@ import { X, Send, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, Rot
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSmartDrawer, type SmartDrawerState } from '../../hooks/use-smart-drawer';
-import { Bubble as BubbleType, StepAction, ActionResult, Action } from '../../types';
+import { Bubble as BubbleType, StepAction, ActionResult, Action, FieldValueSource } from '../../types';
 import { TargetHighlight } from '../TargetHighlight';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// --- VALUE RESOLVER (mirrors action-engine for bubble fill_field) ---
+
+function resolveFillValue(value: unknown, fieldValues: Record<string, unknown>): unknown {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const src = value as FieldValueSource;
+    if (src.type === 'ref' && 'field' in src) {
+      return fieldValues[src.field];
+    }
+    if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
+      return (src.generator as () => unknown)();
+    }
+  }
+  return value;
 }
 
 // --- CONTEXT ---
@@ -160,19 +175,20 @@ const BubbleRenderer = memo(({
   const handleAction = useCallback((a: StepAction) => {
     if (a.type === 'fill_field' && a.data) {
       const d = a.data as { field: string; value: unknown };
-      onFill(d.field, d.value);
-      onInteraction(`Auto-filled ${d.field} with ${d.value}`);
+      const resolvedValue = resolveFillValue(d.value, fieldValues);
+      onFill(d.field, resolvedValue);
+      onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`);
     } else if (a.type === 'click' && a.data) {
       const d = a.data as { selector?: string; field?: string };
-      const targetSelector = d.field 
-        ? `[data-chalo-field="${d.field}"], #chalo-${d.field}` 
+      const targetSelector = d.field
+        ? `[data-chalo-field="${d.field}"], #chalo-${d.field}`
         : d.selector;
-      
+
       if (targetSelector) {
         const el = document.querySelector(targetSelector);
-        if (el) { 
-          (el as HTMLElement).click(); 
-          onInteraction(`Clicked: ${targetSelector}`); 
+        if (el) {
+          (el as HTMLElement).click();
+          onInteraction(`Clicked: ${targetSelector}`);
         }
       }
     } else if (a.type === 'trigger_action' && a.data) {
@@ -185,7 +201,7 @@ const BubbleRenderer = memo(({
     } else {
       onInteraction(`Clicked: ${a.label}`);
     }
-  }, [onFill, onExecuteSequence, onInteraction]);
+  }, [onFill, onExecuteSequence, onInteraction, fieldValues]);
 
   const handleInputChange = useCallback((v: unknown) => {
     onFill(bubble.targetField!, v);

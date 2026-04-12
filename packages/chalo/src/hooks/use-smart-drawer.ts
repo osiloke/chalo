@@ -1,7 +1,22 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useChaloStore } from '../store';
 import { useChalo } from './use-chalo';
-import { StepAction, Action } from '../types';
+import { StepAction, Action, FieldValueSource } from '../types';
+
+// --- VALUE RESOLVER (mirrors action-engine for bubble fill_field) ---
+
+function resolveFillValue(value: unknown, fieldValues: Record<string, unknown>): unknown {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const src = value as FieldValueSource;
+    if (src.type === 'ref' && 'field' in src) {
+      return fieldValues[src.field];
+    }
+    if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
+      return (src.generator as () => unknown)();
+    }
+  }
+  return value;
+}
 
 export interface ChatMessage {
   id: string;
@@ -72,11 +87,11 @@ export interface SmartDrawerState {
 /**
  * Hook that encapsulates all SmartDrawer business logic.
  * Provides state, handlers, and computed data for building custom drawer UIs.
- * 
+ *
  * @example
  * ```tsx
  * const drawer = useSmartDrawer();
- * 
+ *
  * if (drawer.isOpen) {
  *   return createPortal(
  *     <SmartDrawer.Root>
@@ -91,15 +106,15 @@ export interface SmartDrawerState {
  */
 export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawerState {
   const store = useChaloStore();
-  const { 
-    activeMission, 
-    currentStep, 
-    nextStep, 
-    prevStep, 
-    fillField, 
-    fieldErrors, 
-    fieldValues, 
-    executionContext, 
+  const {
+    activeMission,
+    currentStep,
+    nextStep,
+    prevStep,
+    fillField,
+    fieldErrors,
+    fieldValues,
+    executionContext,
     cancelExecution,
     executeActionSequence
   } = useChalo({ debug: options.debug ?? import.meta.env.DEV });
@@ -160,7 +175,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
   const resumePrompt = useMemo((): ResumePromptData => {
     if (activeMission) {
       // Don't show resume prompt if there's an active mission
-      return { show: false, onResume: () => {}, onDismiss: () => {} };
+      return { show: false, onResume: () => { }, onDismiss: () => { } };
     }
 
     const incompleteTour = Object.values(store.tourHistory).find(
@@ -188,7 +203,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       }
     }
 
-    return { show: false, onResume: () => {}, onDismiss: () => {} };
+    return { show: false, onResume: () => { }, onDismiss: () => { } };
   }, [activeMission, store]);
 
   const handleBubbleInteraction = useCallback((text: string) => {
@@ -199,8 +214,9 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     if (!currentStep) return;
     if (action.type === 'fill_field' && action.data) {
       const d = action.data as { field: string; value: unknown };
-      fillField(d.field, d.value);
-      store.addInteraction(currentStep.id, `Used auto-fill: ${d.value}`);
+      const resolvedValue = resolveFillValue(d.value, fieldValues);
+      fillField(d.field, resolvedValue);
+      store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
     } else if (action.type === 'click' && action.data) {
       const d = action.data as { selector: string };
       const el = document.querySelector(d.selector);
@@ -216,7 +232,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       action.onClick();
       store.addInteraction(currentStep.id, `Selected: ${action.label}`);
     }
-  }, [fillField, currentStep, store, executeActionSequence]);
+  }, [fillField, currentStep, store, executeActionSequence, fieldValues]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);

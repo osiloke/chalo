@@ -9,6 +9,7 @@ import {
   ClickActionConfig,
   ScrollActionConfig,
   FillFieldActionConfig,
+  FieldValueSource,
   ApiCallActionConfig,
   WaitActionConfig,
   ConditionalActionConfig,
@@ -16,6 +17,27 @@ import {
   CustomActionConfig,
   SuccessCondition,
 } from '../types';
+
+// --- VALUE RESOLVER ---
+
+/**
+ * Resolves a fill_field value that may be:
+ * - A literal (string, number, etc.)
+ * - A FieldValueSource ref: { type: 'ref', field: 'otherField' }
+ * - A FieldValueSource fn: { type: 'fn', generator: () => value }
+ */
+function resolveFillValue(value: unknown, ctx: ExecutionContext): unknown {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const src = value as FieldValueSource;
+    if (src.type === 'ref' && 'field' in src) {
+      return ctx.variables[src.field];
+    }
+    if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
+      return (src.generator as () => unknown)();
+    }
+  }
+  return value;
+}
 
 // --- BUILT-IN ACTION HANDLERS ---
 
@@ -55,8 +77,10 @@ const scrollHandler: ActionHandler = async (config: ActionConfig) => {
 
 const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: ExecutionContext) => {
   const { field, value } = config as FillFieldActionConfig;
-  // Store the value in execution context variables
-  ctx.variables[field] = value;
+  // Resolve dynamic values (refs, functions) before storing
+  const resolvedValue = resolveFillValue(value, ctx);
+  // Store the resolved value in execution context variables
+  ctx.variables[field] = resolvedValue;
   // Try to fill the actual DOM element using chalo field markers
   const el = document.querySelector<HTMLInputElement | HTMLSelectElement>(
     `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}`
@@ -64,11 +88,11 @@ const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: Execut
   if (el) {
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
       || Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set;
-    nativeInputValueSetter?.call(el, value);
+    nativeInputValueSetter?.call(el, resolvedValue);
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
-  return { field, value };
+  return { field, value: resolvedValue };
 };
 
 const apiCallHandler: ActionHandler = async (config: ActionConfig) => {
