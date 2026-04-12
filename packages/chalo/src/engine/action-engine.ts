@@ -81,6 +81,10 @@ const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: Execut
   const resolvedValue = resolveFillValue(value, ctx);
   // Store the resolved value in execution context variables
   ctx.variables[field] = resolvedValue;
+  // Also sync to the store/form so React controlled inputs stay in sync
+  if (ctx.updateField) {
+    ctx.updateField(field, resolvedValue, 'valid');
+  }
   // Try to fill the actual DOM element using chalo field markers
   const el = document.querySelector<HTMLInputElement | HTMLSelectElement>(
     `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}`

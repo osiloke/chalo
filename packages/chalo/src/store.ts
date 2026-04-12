@@ -170,11 +170,12 @@ export const useChaloStore = create<ChaloStore>()(
       },
 
       executeActionSequence: async (actions: Action[], stepId?: string) => {
-        const { executionContext, addInteraction } = get();
+        const { executionContext, addInteraction, updateField } = get();
         // Reset context for new sequence
         executionContext.results = {};
         executionContext.variables = {};
         executionContext.isRunning = true;
+        executionContext.updateField = updateField;
         set((state) => ({
           executionContext: { ...state.executionContext, ...executionContext },
         }));

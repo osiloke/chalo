@@ -122,6 +122,8 @@ export interface ExecutionContext {
   variables: Record<string, unknown>;
   isRunning: boolean;
   currentActionId: string | null;
+  /** Optional callback to sync field values with the store/form (set by store before execution) */
+  updateField?: (name: string, value: unknown, status?: string) => void;
 }
 
 // Handler function signature for custom actions
