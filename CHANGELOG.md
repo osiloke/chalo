@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/osiloke/chalo/compare/v2.0.1...v2.1.0) (2026-04-13)
+
+
+### Features
+
+* **chalo:** add page‑reload aware action execution ([3a120dd](https://github.com/osiloke/chalo/commit/3a120dd37e6cecd3f366e68fcb99d47db0491248))
+
 ## [2.0.1](https://github.com/osiloke/chalo/compare/v2.0.0...v2.0.1) (2026-04-12)
 
 # [2.0.0](https://github.com/osiloke/chalo/compare/v1.8.0...v2.0.0) (2026-04-12)
