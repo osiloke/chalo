@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/osiloke/chalo/compare/v2.1.0...v2.2.0) (2026-04-13)
+
+
+### Features
+
+* **chalo:** add disableActionInteractions flag to smart drawer ([031d57f](https://github.com/osiloke/chalo/commit/031d57feca3e0152c42c12a16eee1829352ba06f))
+
 # [2.1.0](https://github.com/osiloke/chalo/compare/v2.0.1...v2.1.0) (2026-04-13)
 
 
