@@ -28,6 +28,8 @@ export const useChaloStore = create<ChaloStore>()(
   persist(
     (set, get) => ({
       ...initialState,
+      // Extended state for persistence
+      executedSteps: {} as Record<string, string[]>,
 
       registerMission: (mission: Mission) => {
         set((state) => ({
@@ -207,6 +209,33 @@ export const useChaloStore = create<ChaloStore>()(
       reset: () => set(initialState),
 
       setError: (error: string | null) => set({ error }),
+
+      // Helper to record that a step's actions were executed
+      recordExecutedStep: (missionId: MissionId, stepId: StepId) => {
+        set((state) => {
+          const executedSteps = (state as any).executedSteps || {};
+          const missionExecuted = executedSteps[missionId] || [];
+          if (!missionExecuted.includes(stepId)) {
+            return {
+              executedSteps: {
+                ...executedSteps,
+                [missionId]: [...missionExecuted, stepId],
+              },
+            } as any;
+          }
+          return {} as any;
+        });
+      },
+
+      // Helper to clear executed steps for a mission
+      clearExecutedSteps: (missionId: MissionId) => {
+        set((state) => ({
+          executedSteps: {
+            ...((state as any).executedSteps || {}),
+            [missionId]: [],
+          },
+        } as any));
+      },
     }),
     {
       name: 'chalo-storage',
@@ -220,6 +249,7 @@ export const useChaloStore = create<ChaloStore>()(
         completedMissions: state.completedMissions,
         isPaused: state.isPaused,
         isCompleted: state.isCompleted,
+        executedSteps: (state as any).executedSteps || {},
       }),
     }
   )

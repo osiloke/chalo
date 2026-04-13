@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useChaloStore } from '../store';
-import { MissionId, StepId, SuccessCondition } from '../types';
+import { MissionId, StepId, SuccessCondition, Action } from '../types';
 import { UseFormReturn, RegisterOptions, FieldValues, Path, PathValue } from 'react-hook-form';
+import { isPageReload } from '../utils/reload';
 
 export interface UseChaloOptions<TFieldValues extends FieldValues = FieldValues> {
   form?: UseFormReturn<TFieldValues>;
@@ -121,6 +122,8 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     log('executeActionSequence', { stepId, count: actions.length });
     return _executeActionSequence(actions, stepId);
   }, [_executeActionSequence, log]);
+
+  const _recordExecutedStep = useChaloStore(s => s.recordExecutedStep);
 
   const _cancelExecution = useChaloStore(s => s.cancelExecution);
   const cancelExecution = useCallback<typeof _cancelExecution>(() => {
@@ -263,6 +266,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   // Reset executed sequences when mission changes
   useEffect(() => {
     executedSequenceRef.current.clear();
+    hasHandledReloadRef.current = false;
   }, [activeMissionId]);
 
   // Handle mission completion
@@ -333,16 +337,71 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   }, [activeMission, currentStepId, log, _goToStep]);
 
   // Auto-execute action sequence when step changes and has actions
+  // Handles reload detection and executeOnReload flag
+  const hasHandledReloadRef = useRef(false);
+
   useEffect(() => {
-    if (!currentStep?.actionSequence || !currentStepId) return;
-    if (executedSequenceRef.current.has(currentStepId)) return;
+    if (!currentStep?.actionSequence || !currentStepId || !activeMissionId) return;
 
-    // Check step-level condition: only auto-execute if condition is met (or not set)
-    if (currentStep.condition && !evaluateCondition(currentStep.condition)) return;
+    const isReload = isPageReload();
+    const wasPreviouslyExecuted = executedSequenceRef.current.has(currentStepId);
+    const shouldExecuteOnReload = currentStep.executeOnReload === true;
+    const hasReloadActions = currentStep.actionSequence.some((action: Action) => action.executeOnReload === true);
 
-    executedSequenceRef.current.add(currentStepId);
-    executeActionSequence(currentStep.actionSequence, currentStepId);
-  }, [currentStepId, currentStep?.actionSequence, currentStep?.condition, executeActionSequence, evaluateCondition]);
+    // Check if conditions are met
+    const conditionsMet = !currentStep.condition || evaluateCondition(currentStep.condition);
+
+    // Decision logic for execution:
+    // 1. Normal flow (not reload): execute if not previously executed AND conditions met
+    // 2. Reload without flags: skip execution (DOM state reset, conditions likely fail)
+    // 3. Reload with step.executeOnReload: force execute all actions
+    // 4. Reload with action.executeOnReload: execute only marked actions
+
+    if (!isReload && wasPreviouslyExecuted) {
+      // Already executed in this session, skip
+      return;
+    }
+
+    if (isReload && !wasPreviouslyExecuted && !shouldExecuteOnReload && !hasReloadActions) {
+      // First time seeing this step after reload, but no reload flags
+      // Only execute if conditions are met
+      if (!conditionsMet) return;
+    }
+
+    if (isReload && wasPreviouslyExecuted && !shouldExecuteOnReload && !hasReloadActions) {
+      // Was executed before reload, no reload flags, skip
+      return;
+    }
+
+    // Mark as handled for this reload cycle
+    if (isReload && !hasHandledReloadRef.current) {
+      hasHandledReloadRef.current = true;
+    }
+
+    // Execute appropriate actions
+    if (isReload && !conditionsMet && hasReloadActions) {
+      // Execute only actions marked with executeOnReload
+      const reloadActions = currentStep.actionSequence.filter(
+        (action: Action) => action.executeOnReload === true
+      );
+      log('executeActionSequence (reload actions only)', {
+        stepId: currentStepId,
+        actionCount: reloadActions.length
+      });
+      executedSequenceRef.current.add(currentStepId);
+      executeActionSequence(reloadActions, currentStepId);
+    } else if (conditionsMet || shouldExecuteOnReload) {
+      // Execute all actions
+      log('executeActionSequence', { stepId: currentStepId, actionCount: currentStep.actionSequence.length });
+      executedSequenceRef.current.add(currentStepId);
+      executeActionSequence(currentStep.actionSequence, currentStepId);
+    }
+
+    // Record in persisted state for reload tracking
+    if (activeMissionId) {
+      _recordExecutedStep(activeMissionId, currentStepId);
+    }
+  }, [currentStepId, currentStep?.actionSequence, currentStep?.condition, currentStep?.executeOnReload, executeActionSequence, evaluateCondition, activeMissionId, _recordExecutedStep, log]);
 
   // Polling: check waitFor condition on current step and auto-advance when met
   // Per-step tracking: use a Set so consecutive steps with waitFor don't interfere
@@ -413,6 +472,15 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       }
     },
     [form, log, _updateFieldInStore]
+  );
+
+  // Public API: update a field value in the store (simpler than fillField, no form sync)
+  const updateField = useCallback(
+    (name: string, value: unknown, status?: 'idle' | 'focused' | 'valid' | 'invalid') => {
+      log('updateField', { name, value });
+      _updateFieldInStore(name, value, status);
+    },
+    [log, _updateFieldInStore]
   );
 
   const registerField = useCallback(
@@ -506,6 +574,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     registerField,
     registerElement,
     fillField,
+    updateField,
     recordTourEntry,
     tourHistory,
     evaluateCondition,

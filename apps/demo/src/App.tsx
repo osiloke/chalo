@@ -26,6 +26,7 @@ import {
   Search,
   FolderPlus,
   BookOpen,
+  RefreshCw,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -143,6 +144,7 @@ const PRODUCT_TOUR_MISSION: Mission = {
       title: 'Find the Create Button',
       content: 'Look for the "Create Project" button in the Mission Center. I\'ll click it for you to open the creation form.',
       targetElement: '#btn-create-project',
+      executeOnReload: true, // Re-execute on page reload to restore modal state
       condition: {
         type: 'custom',
         predicate: () => !document.querySelector('[role="dialog"]'),
@@ -153,6 +155,7 @@ const PRODUCT_TOUR_MISSION: Mission = {
           type: 'click',
           config: { selector: '#btn-create-project' },
           label: 'Open create modal',
+          executeOnReload: true, // This action MUST run on reload even if condition fails
         },
       ],
       waitFor: {
@@ -367,6 +370,75 @@ const PORTAL_DIALOG_MISSION: Mission = {
   ],
 };
 
+const RELOAD_DEMO_MISSION: Mission = {
+  id: 'reload-demo',
+  title: 'Page Reload Demo',
+  description: 'Demonstrates action re-execution on page reload to restore UI state',
+  allowCompletion: true,
+  steps: [
+    {
+      id: 'reload-intro',
+      title: 'Reload Behavior Demo',
+      content: 'This mission demonstrates how actions can re-execute on page reload to restore UI state. Try refreshing the page at any step!',
+      navigationRules: { canGoBack: false },
+    },
+    {
+      id: 'reload-open-modal',
+      title: 'Open Configuration Modal',
+      content: 'I\'ll open a modal for you. If you refresh the page, I\'ll open it again automatically!',
+      targetElement: '#btn-reload-demo',
+      executeOnReload: true, // Entire step re-executes on reload
+      actionSequence: [
+        {
+          id: 'click-reload-btn',
+          type: 'click',
+          config: { selector: '#btn-reload-demo' },
+          label: 'Open reload demo modal',
+          executeOnReload: true, // This specific action runs on reload even if conditions fail
+        },
+      ],
+      waitFor: {
+        type: 'custom',
+        predicate: () => !!document.querySelector('[data-reload-modal="true"]'),
+      },
+    },
+    {
+      id: 'reload-modal-open',
+      title: 'Modal Restored!',
+      content: 'The modal reopened automatically after reload. This is powered by the executeOnReload flag. Try filling the form below!',
+      targetField: 'reloadDemoField',
+      bubbles: [
+        { id: 'msg-reload-1', type: 'message', content: 'Notice how the modal reopened? That\'s the executeOnReload flag in action!' },
+        {
+          id: 'act-reload-1', type: 'action-group', actions: [
+            { label: 'Continue to form fill', type: 'next' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'reload-fill-field',
+      title: 'Auto-fill Field',
+      content: 'Now I\'ll fill this field for you. This action won\'t re-execute on reload unless you mark it.',
+      targetField: 'reloadDemoField',
+      bubbles: [
+        { id: 'inp-reload-field', type: 'input', targetField: 'reloadDemoField' },
+        {
+          id: 'act-reload-fill', type: 'action-group', actions: [
+            { label: 'Auto-fill: Reload Test Value', type: 'fill_field', data: { field: 'reloadDemoField', value: 'Restored after reload!' } },
+          ],
+        },
+      ],
+      waitFor: { type: 'field_touched', field: 'reloadDemoField' },
+    },
+    {
+      id: 'reload-complete',
+      title: 'Reload Demo Complete! 🎉',
+      content: 'You\'ve seen how executeOnReload works. Actions marked with this flag re-execute on page reload to restore critical UI state.',
+    },
+  ],
+};
+
 const PLAIN_INPUTS_MISSION: Mission = {
   id: 'plain-inputs-demo',
   title: 'Plain HTML Inputs (No RHF)',
@@ -504,6 +576,7 @@ export default function App() {
   const [dataType, setDataType] = useState<'realtime' | 'snapshots'>('realtime');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPortalDialogOpen, setIsPortalDialogOpen] = useState(false);
+  const [isReloadDemoModalOpen, setIsReloadDemoModalOpen] = useState(false);
   const [createdProjects, setCreatedProjects] = useState<CreateProjectFormData[]>([]);
   const [deployStatus, setDeployStatus] = useState<string | null>(null);
 
@@ -515,6 +588,7 @@ export default function App() {
     currentStep,
     nextStep,
     fieldValues,
+    updateField,
   } = useChalo({ form, debug: import.meta.env.DEV });
 
   const handleRegisterMissions = useCallback(() => {
@@ -523,6 +597,7 @@ export default function App() {
     registerMission(PRODUCT_TOUR_MISSION);
     registerMission(ACTION_ENGINE_MISSION);
     registerMission(PORTAL_DIALOG_MISSION);
+    registerMission(RELOAD_DEMO_MISSION);
     registerMission(PLAIN_INPUTS_MISSION);
   }, [registerMission]);
 
@@ -557,6 +632,17 @@ export default function App() {
 
   const handleOpenPortalDialog = () => {
     setIsPortalDialogOpen(true);
+  };
+
+  const handleOpenReloadDemoModal = () => {
+    setIsReloadDemoModalOpen(true);
+    if (currentStep?.id === 'reload-open-modal') {
+      nextStep();
+    }
+  };
+
+  const handleCloseReloadDemoModal = () => {
+    setIsReloadDemoModalOpen(false);
   };
 
   const handleClosePortalDialog = () => {
@@ -721,6 +807,18 @@ export default function App() {
                     <div className="flex items-center space-x-3">
                       <FolderPlus size={18} />
                       <span className="font-semibold">Create Project</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                    id="btn-reload-demo"
+                    onClick={handleOpenReloadDemoModal}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-orange-600 text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <RefreshCw size={18} />
+                      <span className="font-semibold">Reload Demo Modal</span>
                     </div>
                     <ChevronRight size={18} />
                   </button>
@@ -991,6 +1089,39 @@ export default function App() {
           </button>
         </div>
       </PortalDialog>
+
+      {/* Reload Demo Modal */}
+      {isReloadDemoModalOpen && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div
+            data-reload-modal="true"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full p-8 border border-orange-500/20"
+          >
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Reload Demo Modal</h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-6">
+              This modal reopened automatically after a page reload because the action has <code className="bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded text-sm text-orange-600">executeOnReload: true</code>.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Demo Field</label>
+                <input
+                  type="text"
+                  value={String(fieldValues.reloadDemoField || '')}
+                  onChange={(e) => updateField('reloadDemoField', e.target.value)}
+                  placeholder="Try refreshing the page!"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              <button
+                onClick={handleCloseReloadDemoModal}
+                className="w-full py-3 rounded-xl bg-orange-600 text-white font-semibold hover:bg-orange-700 shadow-lg transition-all"
+              >
+                Close Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

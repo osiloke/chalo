@@ -105,6 +105,13 @@ export interface Action {
   rollback?: RollbackConfig;
   dependsOn?: string[]; // action IDs that must complete first
   condition?: SuccessCondition; // skip if condition not met
+  /**
+   * When true, this action will execute on page reload even if
+   * conditions are not met or it was previously executed.
+   * Use for actions that restore critical UI state (e.g., opening modals).
+   * @default false
+   */
+  executeOnReload?: boolean;
 }
 
 export interface ActionResult {
@@ -169,6 +176,12 @@ export interface Step {
   };
   actions?: StepAction[];
   actionSequence?: Action[]; // Engine-driven action sequence for this step
+  /**
+   * When true, the actionSequence will re-execute on page reload
+   * regardless of execution history or condition checks.
+   * @default false
+   */
+  executeOnReload?: boolean;
 }
 
 export interface StepAction {
@@ -237,4 +250,6 @@ export interface ChaloStore extends ChaloState {
   resetMission: () => void;
   reset: () => void;
   setError: (error: string | null) => void;
+  recordExecutedStep: (missionId: MissionId, stepId: StepId) => void;
+  clearExecutedSteps: (missionId: MissionId) => void;
 }
