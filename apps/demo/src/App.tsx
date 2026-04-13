@@ -1092,7 +1092,7 @@ export default function App() {
 
       {/* Reload Demo Modal */}
       {isReloadDemoModalOpen && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-9998 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div
             data-reload-modal="true"
             className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full p-8 border border-orange-500/20"

@@ -162,7 +162,8 @@ const BubbleRenderer = memo(({
   onNext,
   onPrev,
   onExecuteSequence,
-  onInteraction
+  onInteraction,
+  disableActionInteractions
 }: {
   bubble: BubbleType;
   fieldValues: Record<string, unknown>;
@@ -171,13 +172,16 @@ const BubbleRenderer = memo(({
   onPrev: () => void;
   onExecuteSequence: (actions: Action[]) => void;
   onInteraction: (text: string) => void;
+  disableActionInteractions?: boolean;
 }) => {
   const handleAction = useCallback((a: StepAction) => {
     if (a.type === 'fill_field' && a.data) {
       const d = a.data as { field: string; value: unknown };
       const resolvedValue = resolveFillValue(d.value, fieldValues);
       onFill(d.field, resolvedValue);
-      onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`);
+      if (!disableActionInteractions) {
+        onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`);
+      }
     } else if (a.type === 'click' && a.data) {
       const d = a.data as { selector?: string; field?: string };
       const targetSelector = d.field
@@ -188,20 +192,28 @@ const BubbleRenderer = memo(({
         const el = document.querySelector(targetSelector);
         if (el) {
           (el as HTMLElement).click();
-          onInteraction(`Clicked: ${targetSelector}`);
+          if (!disableActionInteractions) {
+            onInteraction(`Clicked: ${targetSelector}`);
+          }
         }
       }
     } else if (a.type === 'trigger_action' && a.data) {
       const actions = Array.isArray(a.data) ? a.data : [a.data];
       onExecuteSequence(actions as Action[]);
-      onInteraction(`Triggered action sequence: ${a.label}`);
+      if (!disableActionInteractions) {
+        onInteraction(`Triggered action sequence: ${a.label}`);
+      }
     } else if (a.onClick) {
       a.onClick();
-      onInteraction(`Performed action: ${a.label}`);
+      if (!disableActionInteractions) {
+        onInteraction(`Performed action: ${a.label}`);
+      }
     } else {
-      onInteraction(`Clicked: ${a.label}`);
+      if (!disableActionInteractions) {
+        onInteraction(`Clicked: ${a.label}`);
+      }
     }
-  }, [onFill, onExecuteSequence, onInteraction, fieldValues]);
+  }, [onFill, onExecuteSequence, onInteraction, fieldValues, disableActionInteractions]);
 
   const handleInputChange = useCallback((v: unknown) => {
     onFill(bubble.targetField!, v);
@@ -435,6 +447,7 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
       onPrev={actions.prevStep}
       onExecuteSequence={actions.executeActionSequence}
       onInteraction={actions.handleBubbleInteraction}
+      disableActionInteractions={actions.disableActionInteractions}
     />
   ), [fieldValues, actions]);
 

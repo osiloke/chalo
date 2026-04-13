@@ -55,6 +55,9 @@ const step: Step = {
     value: true
   },
 
+  // Reload Behavior: Re-execute actionSequence on page reload to restore UI state
+  executeOnReload: true, // Forces all actions to re-run when page is reloaded
+
   // Actions: Automation engine side-effects triggered when step is reached
   actionSequence: [ /* ... Actions ... */ ],
 
@@ -309,9 +312,212 @@ bubbles: [
 ]
 ```
 
+## 6. SmartDrawer Configuration Options
+
+The `useSmartDrawer` hook accepts an options object to customize the drawer's behavior.
+
+### Available Options
+
+```typescript
+interface UseSmartDrawerOptions {
+  /** Enable debug logging to console. Default: false in production, true in dev */
+  debug?: boolean;
+
+  /** Typing delay in ms before showing next bubble (default: 1200) */
+  typingDelay?: number;
+
+  /** Disable action interaction messages from being added to chat history (default: false) */
+  disableActionInteractions?: boolean;
+}
+```
+
+### Usage Example
+
+```typescript
+import { useSmartDrawer } from 'chalo';
+
+function MyComponent() {
+  const drawer = useSmartDrawer({
+    debug: false,
+    typingDelay: 800, // Faster typing
+    disableActionInteractions: true, // Don't show action execution messages
+  });
+
+  // ...
+}
+```
+
+### Disabling Action Interaction Messages
+
+When `disableActionInteractions` is set to `true`, actions still execute normally but don't create chat messages in the conversation history. This keeps the chat cleaner when you have many automated actions.
+
+```typescript
+const drawer = useSmartDrawer({
+  disableActionInteractions: true,
+});
+```
+
+**What happens when disabled:**
+- ✅ Actions still execute (clicks, fills, API calls, etc.)
+- ✅ Bubble UI (message, input, select) still render normally
+- ❌ No "Auto-filled X with Y" messages
+- ❌ No "Clicked: selector" messages
+- ❌ No "Triggered action sequence" messages
+
+**Use case example:**
+```typescript
+// Clean chat - only show step content and explicit message bubbles
+const drawer = useSmartDrawer({ disableActionInteractions: true });
+
+// With a mission like:
+{
+  id: 'form-filling',
+  steps: [
+    {
+      id: 'fill-basic-info',
+      content: 'Let me help you fill out this form.',
+      bubbles: [
+        { id: 'msg1', type: 'message', content: 'I\'ll auto-fill your details.' },
+        { id: 'actions', type: 'action-group', actions: [
+          { label: 'Auto-fill', type: 'fill_field', data: { field: 'name', value: 'John' } },
+          // This fills the field but doesn't add a chat message
+        ]}
+      ]
+    }
+  ]
+}
+// Chat shows: step content → message bubble → user action → next step
+// Instead of: step content → message bubble → action message → action message → next step
+```
+
+## 7. Page Reload and State Recovery
+
+When a user refreshes the page during an active mission, Chalo automatically restores the mission state from `localStorage`. However, DOM elements (like modals, dialogs, or dynamically created content) are lost on reload. The `executeOnReload` flag ensures critical UI state is restored.
+
+### Understanding Reload Behavior
+
+By default, when a page reloads:
+- ✅ Mission state is restored (current step, field values, progress)
+- ❌ DOM state is lost (modals close, dynamic content disappears)
+- ❌ Action sequences do NOT re-execute (to prevent unwanted side effects)
+
+Use `executeOnReload` to override this behavior and restore critical UI state.
+
+### Step-Level `executeOnReload`
+
+When set to `true` on a step, the entire `actionSequence` will re-execute on page reload, regardless of whether it already ran or if conditions are met.
+
+```typescript
+{
+  id: 'open-modal-step',
+  title: 'Open Configuration Modal',
+  content: 'I\'ll open the configuration modal for you.',
+  executeOnReload: true, // ← Entire step re-executes on reload
+  actionSequence: [
+    {
+      id: 'click-open-btn',
+      type: 'click',
+      config: { selector: '#btn-open-modal' },
+      label: 'Open modal'
+    }
+  ]
+}
+```
+
+### Action-Level `executeOnReload`
+
+For finer control, mark individual actions within an `actionSequence` to run on reload. This is useful when you only want certain actions to restore state.
+
+```typescript
+{
+  id: 'setup-step',
+  actionSequence: [
+    {
+      id: 'open-modal',
+      type: 'click',
+      config: { selector: '#btn-modal' },
+      label: 'Open modal',
+      executeOnReload: true  // ← This action runs on reload
+    },
+    {
+      id: 'track-analytics',
+      type: 'api_call',
+      config: { url: '/api/track', method: 'POST' },
+      executeOnReload: false  // ← Skip this on reload (default)
+    }
+  ]
+}
+```
+
+### When to Use `executeOnReload`
+
+**✅ Use it for:**
+- Opening modals, dialogs, or overlays that define the mission context
+- Clicking buttons that reveal critical UI elements
+- Scrolling to elements that must be visible for the mission to continue
+- Any action that establishes the initial state for a step
+
+**❌ Don't use it for:**
+- Destructive actions (form submissions, API mutations)
+- Analytics or tracking calls
+- Actions that should only happen once per session
+- Actions with side effects that shouldn't repeat
+
+### Reload Behavior Decision Matrix
+
+| Scenario | `executeOnReload` | Conditions Met | Previously Executed | Result |
+|----------|-------------------|----------------|---------------------|--------|
+| Normal step advance | ❌ | ✅ | ❌ | ✅ Execute all actions |
+| Normal step advance | ❌ | ✅ | ✅ | ❌ Skip (already executed) |
+| Page reload | ❌ | ✅ | ❌ | ✅ Execute all actions |
+| Page reload | ❌ | ❌ | ❌ | ❌ Skip (conditions fail) |
+| Page reload | ❌ | ❌ | ✅ | ❌ Skip (already executed) |
+| Page reload | ✅ (step) | ❌ | ✅ | ✅ Execute all actions |
+| Page reload | ✅ (action) | ❌ | ✅ | ✅ Execute marked actions only |
+| Page reload | ✅ (both) | ❌ | ✅ | ✅ Execute all actions |
+
+### Practical Example: Modal-Based Mission
+
+This example shows a mission that guides users through creating a project in a modal:
+
+```typescript
+{
+  id: 'find-create-btn',
+  title: 'Find the Create Button',
+  content: 'Look for the "Create Project" button. I\'ll click it for you.',
+  targetElement: '#btn-create-project',
+  executeOnReload: true, // Restore modal if page reloads
+  condition: {
+    type: 'custom',
+    predicate: () => !document.querySelector('[role="dialog"]'),
+  },
+  actionSequence: [
+    {
+      id: 'click-create',
+      type: 'click',
+      config: { selector: '#btn-create-project' },
+      label: 'Open create modal',
+      executeOnReload: true, // This action MUST run on reload even if condition fails
+    },
+  ],
+  waitFor: {
+    type: 'custom',
+    predicate: () => !!document.querySelector('[role="dialog"]'),
+  },
+}
+```
+
+**What happens on reload:**
+1. User is on this step when they refresh
+2. Modal is gone (DOM reset), so `condition` would fail
+3. But `executeOnReload: true` on the action overrides the condition check
+4. The click action executes, reopening the modal
+5. Mission continues seamlessly
+
 ## Workflow Summary
 
 1. **Build The UI:** Use `registerField` and `registerElement` from `useChalo` in your React components.
 2. **Define Interactions:** Construct your `Mission` with conditions (`waitFor`), animations (`scroll`), and dom automations (`actionSequence`).
-3. **Register Context:** Use `useChalo({ form: myRHFForm })` to seamlessly lock the UI automation to your native form validation.
-4. **Activate:** Call `registerMission(mission)` and `startMission(mission.id)`. The `SmartDrawer` will mount and orchestrate the flow.
+3. **Handle Reloads:** Add `executeOnReload: true` to steps/actions that restore critical UI state (modals, dialogs, overlays).
+4. **Register Context:** Use `useChalo({ form: myRHFForm })` to seamlessly lock the UI automation to your native form validation.
+5. **Activate:** Call `registerMission(mission)` and `startMission(mission.id)`. The `SmartDrawer` will mount and orchestrate the flow.

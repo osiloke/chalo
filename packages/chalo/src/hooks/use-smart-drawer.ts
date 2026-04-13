@@ -28,6 +28,8 @@ export interface UseSmartDrawerOptions {
   debug?: boolean;
   /** Typing delay in ms before showing next bubble (default: 1200) */
   typingDelay?: number;
+  /** Disable action interaction messages from being added to chat history (default: false) */
+  disableActionInteractions?: boolean;
 }
 
 export interface ResumePromptData {
@@ -81,6 +83,8 @@ export interface SmartDrawerState {
     executeActionSequence: (actions: Action[]) => void;
     handleBubbleInteraction: (text: string) => void;
     handleLegacyAction: (action: StepAction) => void;
+    /** Whether action interaction messages are disabled */
+    disableActionInteractions: boolean;
   };
 }
 
@@ -120,6 +124,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
   } = useChalo({ debug: options.debug ?? import.meta.env.DEV });
 
   const typingDelay = options.typingDelay ?? 1200;
+  const disableActionInteractions = options.disableActionInteractions ?? false;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -207,8 +212,9 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
   }, [activeMission, store]);
 
   const handleBubbleInteraction = useCallback((text: string) => {
+    if (disableActionInteractions) return;
     store.addInteraction(currentStep?.id ?? '', text);
-  }, [currentStep?.id, store]);
+  }, [currentStep?.id, store, disableActionInteractions]);
 
   const handleLegacyAction = useCallback((action: StepAction) => {
     if (!currentStep) return;
@@ -216,23 +222,31 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       const d = action.data as { field: string; value: unknown };
       const resolvedValue = resolveFillValue(d.value, fieldValues);
       fillField(d.field, resolvedValue);
-      store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
+      if (!disableActionInteractions) {
+        store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
+      }
     } else if (action.type === 'click' && action.data) {
       const d = action.data as { selector: string };
       const el = document.querySelector(d.selector);
       if (el) {
         (el as HTMLElement).click();
-        store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
+        if (!disableActionInteractions) {
+          store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
+        }
       }
     } else if (action.type === 'trigger_action' && action.data) {
       const actions = Array.isArray(action.data) ? action.data : [action.data];
       executeActionSequence(actions, currentStep.id);
-      store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
+      if (!disableActionInteractions) {
+        store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
+      }
     } else if (action.onClick) {
       action.onClick();
-      store.addInteraction(currentStep.id, `Selected: ${action.label}`);
+      if (!disableActionInteractions) {
+        store.addInteraction(currentStep.id, `Selected: ${action.label}`);
+      }
     }
-  }, [fillField, currentStep, store, executeActionSequence, fieldValues]);
+  }, [fillField, currentStep, store, executeActionSequence, fieldValues, disableActionInteractions]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
@@ -268,6 +282,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       executeActionSequence,
       handleBubbleInteraction,
       handleLegacyAction,
+      disableActionInteractions,
     },
   };
 }
