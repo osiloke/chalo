@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/osiloke/chalo/compare/v2.2.0...v2.3.0) (2026-04-14)
+
+
+### Features
+
+* **demo:** add scroll mission demo ([b8776f2](https://github.com/osiloke/chalo/commit/b8776f27dbd3215915ca0a1232f7d2c48552dabe))
+
 # [2.2.0](https://github.com/osiloke/chalo/compare/v2.1.0...v2.2.0) (2026-04-13)
 
 
