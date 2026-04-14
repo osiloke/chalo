@@ -251,6 +251,108 @@ const PRODUCT_TOUR_MISSION: Mission = {
   ],
 };
 
+// Scroll mission demo - shows scrolling to various elements
+const SCROLL_MISSION: Mission = {
+  id: 'scroll-demo',
+  title: 'Scroll Mission Demo',
+  description: 'Demonstrates the scroll action with various targets: page elements, dropdowns, and form fields.',
+  allowCompletion: true,
+  steps: [
+    {
+      id: 'scroll-intro',
+      title: 'Scroll Actions',
+      content: 'This mission shows how scroll actions can automatically navigate to elements anywhere on the page, including dropdowns and form fields.',
+      navigationRules: { canGoBack: false },
+      actionSequence: [
+        {
+          id: 'scroll-activity',
+          type: 'scroll',
+          config: { field: 'activity-stream', behavior: 'smooth' },
+          label: 'Scroll to Activity Stream',
+        },
+      ],
+    },
+    {
+      id: 'scroll-chart',
+      title: 'Scroll to Chart',
+      content: 'Watch as we automatically scroll to the chart section using a CSS selector.',
+      actionSequence: [
+        {
+          id: 'scroll-to-chart',
+          type: 'scroll',
+          config: { selector: '#chart-overview', behavior: 'smooth' },
+          label: 'Scroll to chart',
+        },
+        {
+          id: 'wait-chart',
+          type: 'wait',
+          config: { durationMs: 500 },
+          label: 'Wait for scroll',
+          dependsOn: ['scroll-to-chart'],
+        },
+      ],
+    },
+    {
+      id: 'scroll-tier',
+      title: 'Scroll to Dropdown',
+      content: 'Now we scroll to the Workspace Tier dropdown in the form and highlight it.',
+      actionSequence: [
+        {
+          id: 'scroll-to-tier',
+          type: 'scroll',
+          config: { field: 'tier', behavior: 'smooth' },
+          label: 'Scroll to tier dropdown',
+        },
+        {
+          id: 'wait-tier',
+          type: 'wait',
+          config: { durationMs: 500 },
+          label: 'Wait for scroll',
+          dependsOn: ['scroll-to-tier'],
+        },
+      ],
+    },
+    {
+      id: 'scroll-node',
+      title: 'Scroll to Form',
+      content: 'Scrolling to the Initialize Node form and highlighting the full name field.',
+      actionSequence: [
+        {
+          id: 'scroll-to-name',
+          type: 'scroll',
+          config: { field: 'fullName', behavior: 'smooth' },
+          label: 'Scroll to name field',
+        },
+        {
+          id: 'wait-name',
+          type: 'wait',
+          config: { durationMs: 500 },
+          label: 'Wait for scroll',
+          dependsOn: ['scroll-to-name'],
+        },
+      ],
+    },
+    {
+      id: 'scroll-bottom',
+      title: 'Scroll to Bottom',
+      content: 'Finally, scroll all the way to the bottom of the page without a specific target.',
+      actionSequence: [
+        {
+          id: 'scroll-bottom',
+          type: 'scroll',
+          config: { behavior: 'smooth' },
+          label: 'Scroll to page bottom',
+        },
+      ],
+    },
+    {
+      id: 'scroll-complete',
+      title: 'Scroll Complete! 🎉',
+      content: 'You\'ve seen how scroll actions can navigate to any element on the page. Try combining scroll with other actions like fill_field and click!',
+    },
+  ],
+};
+
 // Action sequence for the action engine demo
 const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
   {
@@ -599,6 +701,7 @@ export default function App() {
     registerMission(PORTAL_DIALOG_MISSION);
     registerMission(RELOAD_DEMO_MISSION);
     registerMission(PLAIN_INPUTS_MISSION);
+    registerMission(SCROLL_MISSION);
   }, [registerMission]);
 
   useEffect(() => {
@@ -783,6 +886,18 @@ export default function App() {
                     <div className="flex items-center space-x-3">
                       <Terminal size={18} />
                       <span className="font-semibold text-slate-500">Plain Inputs (No RHF)</span>
+                    </div>
+                    <ChevronRight size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => startMission('scroll-demo')}
+                    disabled={activeMission?.id === 'scroll-demo'}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Activity size={18} />
+                      <span className="font-semibold text-slate-500">Scroll Mission Demo</span>
                     </div>
                     <ChevronRight size={18} />
                   </button>
@@ -975,7 +1090,10 @@ export default function App() {
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* Main Chart Area */}
-                <div className={cn("glass-card border-none min-h-75 flex flex-col justify-end p-8 relative overflow-hidden group", currentStep?.id === 'chart-overview' && "border-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]")}>
+                <div
+                  id="chart-overview"
+                  className={cn("glass-card border-none min-h-75 flex flex-col justify-end p-8 relative overflow-hidden group", currentStep?.id === 'chart-overview' && "border-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]")}
+                >
                   <div className="absolute top-0 left-0 w-full h-full p-8 flex flex-col pointer-events-none">
                     <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Quantum Throughput</h4>
                     <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest">Network Cluster A-8</p>
@@ -1005,7 +1123,11 @@ export default function App() {
                 </div>
 
                 {/* Activity Stream */}
-                <div className={cn("glass-card border-none p-8 flex flex-col", currentStep?.id === 'activity-stream' && "border-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]")}>
+                <div
+                  id="activity-stream"
+                  data-chalo-field="activity-stream"
+                  className={cn("glass-card border-none p-8 flex flex-col", currentStep?.id === 'activity-stream' && "border-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]")}
+                >
                   <div className="flex items-center justify-between mb-6">
                     <h4 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
                       <Activity size={18} className="text-rose-500" />
