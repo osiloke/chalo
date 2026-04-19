@@ -172,6 +172,12 @@ export const useChaloStore = create<ChaloStore>()(
       },
 
       executeActionSequence: async (actions: Action[], stepId?: string) => {
+        // Prevent infinite loops by checking if an action sequence is already running
+        if (get().executionContext.isRunning) {
+          console.warn('Action sequence already running, skipping to prevent infinite loop');
+          return {};
+        }
+
         const { updateField, addInteraction } = get();
         // Reset context for new sequence immutably
         set((state) => ({
@@ -186,7 +192,7 @@ export const useChaloStore = create<ChaloStore>()(
 
         const results = await actionEngine.executeSequence(actions, get().executionContext, (results) => {
           set((state) => ({
-            executionContext: { ...state.executionContext, results, isRunning: true },
+            executionContext: { ...state.executionContext, results },
           }));
           // Report progress to interaction history
           if (stepId) {

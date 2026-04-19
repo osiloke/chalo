@@ -191,7 +191,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         const val = value[name];
         // Skip if value is identical to avoid redundant store updates
         if (prevFieldValuesRef.current[name] === val) return;
-        
+
         formUpdatedRef.current.add(name);
         updateFieldInStore(name, val);
         prevFieldValuesRef.current[name] = val;
@@ -284,9 +284,12 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
 
   // Reset executed sequences when mission changes
   useEffect(() => {
-    executedSequenceRef.current.clear();
-    hasHandledReloadRef.current = false;
-  }, [activeMissionId]);
+    // Don't clear if an action sequence is currently running to prevent interrupting execution
+    if (!executionContext.isRunning) {
+      executedSequenceRef.current.clear();
+      hasHandledReloadRef.current = false;
+    }
+  }, [activeMissionId, executionContext.isRunning]);
 
   // Handle mission completion
   useEffect(() => {
