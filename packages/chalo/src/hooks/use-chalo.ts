@@ -296,7 +296,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         return (fieldStates[condition.field] || 'idle') !== 'idle';
       case 'element_exists': {
         if (!condition.field) return false;
-        const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}`;
+        const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}, [name="${condition.field}"], #${condition.field}`;
         const el = document.querySelector(selector);
         return condition.exists === false ? !el : !!el;
       }

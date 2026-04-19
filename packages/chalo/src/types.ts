@@ -36,7 +36,10 @@ export interface ClickActionConfig {
 }
 
 export interface ScrollActionConfig {
+  /** CSS selector to find the element */
   selector?: string; // element to scroll to; if omitted, scrolls to bottom
+  /** Named element registered via `registerElement` or `registerField` (preferred over `selector`) */
+  field?: string;
   behavior?: 'smooth' | 'instant';
 }
 

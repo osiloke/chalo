@@ -45,21 +45,33 @@ const clickHandler: ActionHandler = async (config: ActionConfig) => {
   const clickConfig = config as ClickActionConfig;
   // Prefer named field resolution (mirrors fill_field pattern)
   const targetSelector = clickConfig.field
-    ? `[data-chalo-field="${clickConfig.field}"], #chalo-${clickConfig.field}`
+    ? `[data-chalo-field="${clickConfig.field}"], #chalo-${clickConfig.field}, [name="${clickConfig.field}"], #${clickConfig.field}`
     : clickConfig.selector;
   if (!targetSelector) throw new Error('Click action requires either "field" or "selector".');
-  const el = document.querySelector(targetSelector);
-  if (!el) throw new Error(`Element not found: ${targetSelector}`);
+  
+  const elements = document.querySelectorAll(targetSelector);
+  if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`);
+  
+  // Prioritize visible element if multiple matches exist (e.g. responsive design)
+  const el = Array.from(elements).find(e => (e as HTMLElement).offsetParent !== null) || elements[0];
+  
   (el as HTMLElement).click();
   return { clicked: targetSelector };
 };
 
 const scrollHandler: ActionHandler = async (config: ActionConfig) => {
-  const { selector, behavior = 'smooth', field } = config as ScrollActionConfig & { field?: string };
-  const targetSelector = field ? `[data-chalo-field="${field}"], #chalo-${field}` : selector;
+  const { selector, behavior = 'smooth', field } = config as ScrollActionConfig;
+  const targetSelector = field 
+    ? `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}` 
+    : selector;
+    
   if (targetSelector) {
-    const el = document.querySelector<HTMLElement>(targetSelector);
-    if (!el) throw new Error(`Element not found: ${targetSelector}`);
+    const elements = document.querySelectorAll<HTMLElement>(targetSelector);
+    if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`);
+    
+    // Prioritize visible element if multiple matches exist (e.g. responsive design)
+    const el = Array.from(elements).find(e => e.offsetParent !== null) || elements[0];
+    
     el.scrollIntoView({ behavior, block: 'center' });
     // Brief highlight to show the target was found
     el.style.transition = 'outline 0.2s';
@@ -143,7 +155,7 @@ function evaluateCondition(condition: SuccessCondition | undefined, ctx: Executi
       return ctx.variables[`__touched_${condition.field}`] === true;
     case 'element_exists': {
       if (!condition.field) return false;
-      const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}`;
+      const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}, [name="${condition.field}"], #${condition.field}`;
       const el = document.querySelector(selector);
       return condition.exists === false ? !el : !!el;
     }
