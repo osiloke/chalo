@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/osiloke/chalo/compare/v2.4.0...v2.4.1) (2026-04-19)
+
+
+### Performance Improvements
+
+* **chalo:** optimize store updates and effect dependencies ([4f0020b](https://github.com/osiloke/chalo/commit/4f0020bb8e646fa347078785a52b614bf57c2763))
+
 # [2.4.0](https://github.com/osiloke/chalo/compare/v2.3.1...v2.4.0) (2026-04-19)
 
 
