@@ -1,3 +1,10 @@
+## [2.4.3](https://github.com/osiloke/chalo/compare/v2.4.2...v2.4.3) (2026-04-19)
+
+
+### Bug Fixes
+
+* **chalo:** prevent sequence interruption and infinite loops ([7801102](https://github.com/osiloke/chalo/commit/7801102fe928da14aed178d47b4c1177a01f0037))
+
 ## [2.4.2](https://github.com/osiloke/chalo/compare/v2.4.1...v2.4.2) (2026-04-19)
 
 ## [2.4.1](https://github.com/osiloke/chalo/compare/v2.4.0...v2.4.1) (2026-04-19)
