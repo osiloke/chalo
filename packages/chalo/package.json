@@ -19,7 +19,8 @@
       }
     },
     "./theme.css": "./src/theme.css",
-    "./theme.dist.css": "./dist/theme.css"
+    "./theme.dist.css": "./dist/theme.css",
+    "./src/*": "./src/*"
   },
   "files": [
     "dist",
