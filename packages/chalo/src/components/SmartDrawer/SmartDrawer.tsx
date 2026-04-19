@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useCallback, memo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useCallback, memo, type ReactNode, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle, Compass } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -298,12 +298,14 @@ export interface SmartDrawerRootProps {
   className?: string;
   /** Custom className for the placeholder (pushes content in flex layout) */
   placeholderClassName?: string;
+  ref?: RefObject<HTMLDivElement | null>;
 }
 
 export function SmartDrawerRoot({
   children,
   className,
   placeholderClassName,
+  ref
 }: SmartDrawerRootProps) {
   const drawerState = useSmartDrawer();
 
@@ -328,6 +330,7 @@ export function SmartDrawerRoot({
         <AnimatePresence>
           {drawerState.isOpen && (
             <motion.aside
+              ref={ref}
               initial={{ x: 400, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 400, opacity: 0 }}
@@ -708,6 +711,8 @@ export interface SmartDrawerProps {
   title?: string;
   /** Header icon */
   icon?: React.ElementType;
+  /** Ref */
+  ref?: RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -727,11 +732,12 @@ export function SmartDrawer({
   className,
   headerTitle,
   title,
-  icon
+  icon,
+  ref
 }: SmartDrawerProps) {
   return (
     <>
-      <SmartDrawerRoot className={className}>
+      <SmartDrawerRoot ref={ref} className={className}>
         <SmartDrawerHeader
           headerTitle={headerTitle}
           title={title}
