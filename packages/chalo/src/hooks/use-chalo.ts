@@ -189,13 +189,19 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     const subscription = form.watch((value, { name }) => {
       if (name) {
         const val = value[name];
+        // Skip if value is identical to avoid redundant store updates
+        if (prevFieldValuesRef.current[name] === val) return;
+        
         formUpdatedRef.current.add(name);
         updateFieldInStore(name, val);
+        prevFieldValuesRef.current[name] = val;
       } else {
         // Bulk update (e.g. from reset)
         Object.entries(value).forEach(([n, v]) => {
+          if (prevFieldValuesRef.current[n] === v) return;
           formUpdatedRef.current.add(n);
           updateFieldInStore(n, v);
+          prevFieldValuesRef.current[n] = v;
         });
       }
     });
@@ -232,11 +238,14 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     });
   }, [fieldValues, form, activeMissionId]);
 
-  // Handle focus when step changes + pre-populate from store
+  // Handle focus + pre-population when step changes (SINGLE execution per step)
   useEffect(() => {
+    if (!currentStepId) return;
+
     if (currentStep?.targetField && form) {
-      // Pre-populate the field from store value if it exists
-      const storeVal = fieldValues[currentStep.targetField];
+      // Pre-populate the field from store value IF it exists
+      // We read from the store state directly to avoid fieldValues dependency loop
+      const storeVal = useChaloStore.getState().fieldValues[currentStep.targetField];
       if (storeVal !== undefined) {
         try {
           form.setValue(currentStep.targetField as Path<TFieldValues>, storeVal as PathValue<TFieldValues, Path<TFieldValues>>);
@@ -254,11 +263,21 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
       const el = document.querySelector(currentStep.targetElement);
       if (el) el.removeAttribute('data-clicked');
     }
+  }, [currentStepId, form]); // Only re-run when step changes, not when data changes
 
+  // Notify listeners when step changes
+  useEffect(() => {
     if (onStepChange && currentStepId) {
       onStepChange(currentStepId);
     }
-  }, [currentStepId, currentStep, form, onStepChange, fieldValues]);
+  }, [currentStepId, onStepChange]);
+
+  // Notify listeners when mission completes
+  useEffect(() => {
+    if (isCompleted && activeMissionId && onMissionComplete) {
+      onMissionComplete(activeMissionId);
+    }
+  }, [isCompleted, activeMissionId, onMissionComplete]);
 
   // Auto-execute action sequence when step changes and has actions
   const executedSequenceRef = useRef<Set<string>>(new Set());
@@ -348,7 +367,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     const shouldExecuteOnReload = currentStep.executeOnReload === true;
     const hasReloadActions = currentStep.actionSequence.some((action: Action) => action.executeOnReload === true);
 
-    // Check if conditions are met
+    // Check if conditions are met (we use a stable ref-like check here by reading from the current evaluateCondition)
     const conditionsMet = !currentStep.condition || evaluateCondition(currentStep.condition);
 
     // Decision logic for execution:
@@ -401,7 +420,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     if (activeMissionId) {
       _recordExecutedStep(activeMissionId, currentStepId);
     }
-  }, [currentStepId, currentStep?.actionSequence, currentStep?.condition, currentStep?.executeOnReload, executeActionSequence, evaluateCondition, activeMissionId, _recordExecutedStep, log]);
+  }, [currentStepId, activeMissionId, currentStep?.actionSequence, currentStep?.condition, currentStep?.executeOnReload, executeActionSequence, _recordExecutedStep, log]);
 
   // Polling: check waitFor condition on current step and auto-advance when met
   // Per-step tracking: use a Set so consecutive steps with waitFor don't interfere
@@ -431,6 +450,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     if (waitForCheckedStepsRef.current.has(currentStep.id)) return;
 
     const interval = setInterval(() => {
+      // Use evaluateCondition from props/hook scope but we don't want to re-run effect if it changes identity
       if (evaluateCondition(currentStep.waitFor!)) {
         waitForCheckedStepsRef.current.add(currentStep.id);
         clearInterval(interval);
@@ -449,7 +469,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         waitForTimeoutRef.current = null;
       }
     };
-  }, [currentStep?.id, currentStep?.waitFor, evaluateCondition]);
+  }, [currentStep?.id, currentStep?.waitFor]);
 
   // Generic fillField: works with any string key, updates store always,
   // and attempts to update the primary form if the field is registered there.
@@ -458,7 +478,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     (name: string, value: unknown) => {
       log('fillField', { name });
       formUpdatedRef.current.add(name);
-      _updateFieldInStore(name, value, 'valid');
+      updateFieldInStore(name, value, 'valid');
       if (form) {
         try {
           form.setValue(name as Path<TFieldValues>, value as PathValue<TFieldValues, Path<TFieldValues>>, {
@@ -471,29 +491,21 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         }
       }
     },
-    [form, log, _updateFieldInStore]
+    [form, log, updateFieldInStore]
   );
 
   // Public API: update a field value in the store (simpler than fillField, no form sync)
   const updateField = useCallback(
     (name: string, value: unknown, status?: 'idle' | 'focused' | 'valid' | 'invalid') => {
       log('updateField', { name, value });
-      _updateFieldInStore(name, value, status);
+      updateFieldInStore(name, value, status);
     },
-    [log, _updateFieldInStore]
+    [log, updateFieldInStore]
   );
 
   const registerField = useCallback(
     (name: Path<TFieldValues>, rhfOptions?: RegisterOptions<TFieldValues>) => {
       log('registerField', { name });
-      // Pre-populate from store if a value already exists
-      if (fieldValues[name] !== undefined && form) {
-        try {
-          form.setValue(name, fieldValues[name] as PathValue<TFieldValues, Path<TFieldValues>>);
-        } catch {
-          // Field may have incompatible type
-        }
-      }
 
       // Auto-generate a stable id for DOM targeting by action engine
       const fieldId = `chalo-${String(name)}`;
@@ -504,9 +516,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
           name,
           'data-chalo-field': String(name),
           onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-            _updateFieldInStore(name, e.target.value),
-          onFocus: () => _updateFieldInStore(name, fieldValues[name], 'focused'),
-          onBlur: () => _updateFieldInStore(name, fieldValues[name], 'idle'),
+            updateFieldInStore(name, e.target.value),
+          onFocus: () => updateFieldInStore(name, useChaloStore.getState().fieldValues[name], 'focused'),
+          onBlur: () => updateFieldInStore(name, useChaloStore.getState().fieldValues[name], 'idle'),
         };
       }
       const registered = form.register(name, rhfOptions);
@@ -516,15 +528,15 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
         'data-chalo-field': String(name),
         onChange: async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onChange(e);
-          _updateFieldInStore(name, e.target.value);
+          updateFieldInStore(name, e.target.value);
         },
         onBlur: async (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
           await registered.onBlur(e);
-          _updateFieldInStore(name, fieldValues[name], 'idle');
+          updateFieldInStore(name, useChaloStore.getState().fieldValues[name], 'idle');
         }
       };
     },
-    [form, _updateFieldInStore, fieldValues, log]
+    [form, updateFieldInStore, log]
   );
 
   // registerElement: attribute a ref callback that sets data-chalo-field on any

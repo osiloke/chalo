@@ -160,29 +160,31 @@ export const useChaloStore = create<ChaloStore>()(
       },
 
       executeAction: async (action: Action) => {
-        const { executionContext } = get();
         set((state) => ({
           executionContext: { ...state.executionContext, isRunning: true },
         }));
+        const { executionContext } = get();
         const result = await actionEngine.executeAction(action, executionContext);
         set((state) => ({
-          executionContext: { ...state.executionContext, ...executionContext, isRunning: false },
+          executionContext: { ...state.executionContext, isRunning: false },
         }));
         return result;
       },
 
       executeActionSequence: async (actions: Action[], stepId?: string) => {
-        const { executionContext, addInteraction, updateField } = get();
-        // Reset context for new sequence
-        executionContext.results = {};
-        executionContext.variables = {};
-        executionContext.isRunning = true;
-        executionContext.updateField = updateField;
+        const { updateField, addInteraction } = get();
+        // Reset context for new sequence immutably
         set((state) => ({
-          executionContext: { ...state.executionContext, ...executionContext },
+          executionContext: {
+            ...state.executionContext,
+            results: {},
+            variables: {},
+            isRunning: true,
+            updateField,
+          },
         }));
 
-        const results = await actionEngine.executeSequence(actions, executionContext, (results) => {
+        const results = await actionEngine.executeSequence(actions, get().executionContext, (results) => {
           set((state) => ({
             executionContext: { ...state.executionContext, results, isRunning: true },
           }));
