@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/osiloke/chalo/compare/v2.3.1...v2.4.0) (2026-04-19)
+
+
+### Features
+
+* **chalo:** enhance element selection and visibility logic ([1304bc5](https://github.com/osiloke/chalo/commit/1304bc544ff13063551b084776ace6c0168bfd12))
+
 ## [2.3.1](https://github.com/osiloke/chalo/compare/v2.3.0...v2.3.1) (2026-04-19)
 
 # [2.3.0](https://github.com/osiloke/chalo/compare/v2.2.0...v2.3.0) (2026-04-14)
