@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/osiloke/chalo/compare/v2.4.3...v2.5.0) (2026-04-21)
+
+
+### Features
+
+* **chalo:** add scroll positioning control with block and inline options ([254285c](https://github.com/osiloke/chalo/commit/254285ca5d4c53b7d6cf4ea87aa9697862f0fda4))
+
 ## [2.4.3](https://github.com/osiloke/chalo/compare/v2.4.2...v2.4.3) (2026-04-19)
 
 
