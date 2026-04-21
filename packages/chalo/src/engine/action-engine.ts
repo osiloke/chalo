@@ -60,7 +60,8 @@ const clickHandler: ActionHandler = async (config: ActionConfig) => {
 };
 
 const scrollHandler: ActionHandler = async (config: ActionConfig) => {
-  const { selector, behavior = 'smooth', field } = config as ScrollActionConfig;
+  const scrollConfig = config as ScrollActionConfig;
+  const { selector, behavior = 'smooth', field, block = 'center', inline = 'nearest' } = scrollConfig;
   const targetSelector = field 
     ? `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}` 
     : selector;
@@ -72,7 +73,7 @@ const scrollHandler: ActionHandler = async (config: ActionConfig) => {
     // Prioritize visible element if multiple matches exist (e.g. responsive design)
     const el = Array.from(elements).find(e => e.offsetParent !== null) || elements[0];
     
-    el.scrollIntoView({ behavior, block: 'center' });
+    el.scrollIntoView({ behavior, block, inline });
     // Brief highlight to show the target was found
     el.style.transition = 'outline 0.2s';
     el.style.outline = '3px solid rgba(99, 102, 241, 0.6)';

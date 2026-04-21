@@ -392,6 +392,20 @@ interface Action {
 }
 ```
 
+#### `ScrollActionConfig`
+
+When using the `scroll` action type, Chalo defaults to centering the element while preventing horizontal layout shifts (`inline: 'nearest'`), but you can override this:
+
+```typescript
+interface ScrollActionConfig {
+  selector?: string;
+  field?: string;
+  behavior?: 'auto' | 'smooth' | 'instant';
+  block?: ScrollLogicalPosition; // e.g., 'start', 'center', 'end'
+  inline?: ScrollLogicalPosition; // e.g., 'nearest', 'start', 'center'
+}
+```
+
 > 💡 **See the [TypeScript Definitions](packages/chalo/src/types.ts) for complete type documentation.**
 
 ---

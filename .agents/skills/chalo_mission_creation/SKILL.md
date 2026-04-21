@@ -75,7 +75,7 @@ The Action Engine (`packages/chalo/src/engine/action-engine.ts`) is the powerhou
 Instead of relying on fragile CSS selectors, Actions natively understand the `field` names you define via `registerField` and `registerElement`.
 
 - **`click`**: Simulates a native click on a DOM element. Supports both `config: { field: "my_button" }` (preferred for registered elements) and `config: { selector: ".my-class" }`.
-- **`scroll`**: Smoothly scrolls the registered element (e.g. `config: { field: "results-container" }`) into center view and **highlights it briefly** with a blue outline to immediately grab user attention.
+- **`scroll`**: Smoothly scrolls the registered element (e.g. `config: { field: "results-container", block: "start", inline: "nearest" }`) into view and **highlights it briefly** with a blue outline to immediately grab user attention. By default, it centers the block and sets `inline: 'nearest'` to prevent unwanted horizontal scrolling jumps—an essential fix for complex React flex layouts.
 - **`fill_field`**: Updates state variables and forcefully sets the native DOM element's value using its `field` ID, dispatching `input` and `change` events so React/Vue/vanilla apps catch the update. The `value` can be a literal, a field reference (`{ type: 'ref', field: 'sourceField' }`), or a function (`{ type: 'fn', generator: () => value }`). See **Dynamic Field Values** below.
 - **`api_call`**: Initiates a `fetch` request (`url`, `method`, `headers`, `body`).
 - **`wait`**: Suspends the execution pipeline for `durationMs`.

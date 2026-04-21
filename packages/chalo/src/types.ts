@@ -40,7 +40,9 @@ export interface ScrollActionConfig {
   selector?: string; // element to scroll to; if omitted, scrolls to bottom
   /** Named element registered via `registerElement` or `registerField` (preferred over `selector`) */
   field?: string;
-  behavior?: 'smooth' | 'instant';
+  behavior?: 'auto' | 'smooth' | 'instant';
+  block?: ScrollLogicalPosition;
+  inline?: ScrollLogicalPosition;
 }
 
 export type FieldValueSource =
