@@ -273,8 +273,9 @@ export class ActionEngine {
     };
 
     try {
+      const config = action.config || (action as any).data || {};
       const { result: data, attempts } = await withRetry(
-        () => handler(action.config, context),
+        () => handler(config, context),
         action.retry
       );
       result.status = 'success';

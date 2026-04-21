@@ -175,15 +175,16 @@ const BubbleRenderer = memo(({
   disableActionInteractions?: boolean;
 }) => {
   const handleAction = useCallback((a: StepAction) => {
-    if (a.type === 'fill_field' && a.data) {
-      const d = a.data as { field: string; value: unknown };
+    const config = a.config || a.data;
+    if (a.type === 'fill_field' && config) {
+      const d = config as { field: string; value: unknown };
       const resolvedValue = resolveFillValue(d.value, fieldValues);
       onFill(d.field, resolvedValue);
       if (!disableActionInteractions) {
         onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`);
       }
-    } else if (a.type === 'click' && a.data) {
-      const d = a.data as { selector?: string; field?: string };
+    } else if (a.type === 'click' && config) {
+      const d = config as { selector?: string; field?: string };
       const targetSelector = d.field
         ? `[data-chalo-field="${d.field}"], #chalo-${d.field}`
         : d.selector;
@@ -197,8 +198,8 @@ const BubbleRenderer = memo(({
           }
         }
       }
-    } else if (a.type === 'trigger_action' && a.data) {
-      const actions = Array.isArray(a.data) ? a.data : [a.data];
+    } else if (a.type === 'trigger_action' && config) {
+      const actions = Array.isArray(config) ? config : [config];
       onExecuteSequence(actions as Action[]);
       if (!disableActionInteractions) {
         onInteraction(`Triggered action sequence: ${a.label}`);
@@ -510,9 +511,9 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
           )}
 
           {/* Action execution status */}
-          {currentStep?.actionSequence && Object.keys(executionContext.results).length > 0 && (
+          {(executionContext.currentSequence || currentStep?.actionSequence) && Object.keys(executionContext.results).length > 0 && (
             <div className="space-y-2">
-              {currentStep.actionSequence.map((action) => {
+              {(executionContext.currentSequence || currentStep!.actionSequence!).map((action) => {
                 const result = executionContext.results[action.id];
                 if (!result) return null;
                 return (

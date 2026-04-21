@@ -134,6 +134,7 @@ export interface ExecutionContext {
   variables: Record<string, unknown>;
   isRunning: boolean;
   currentActionId: string | null;
+  currentSequence?: Action[];
   /** Optional callback to sync field values with the store/form (set by store before execution) */
   updateField?: (name: string, value: unknown, status?: 'idle' | 'focused' | 'valid' | 'invalid') => void;
 }
@@ -193,6 +194,7 @@ export interface StepAction {
   label: string;
   type: 'next' | 'prev' | 'complete' | 'custom' | 'fill_field' | 'input_manual' | 'trigger_action' | 'click';
   data?: unknown;
+  config?: unknown;
   onClick?: () => void;
 }
 

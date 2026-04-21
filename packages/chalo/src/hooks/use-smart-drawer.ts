@@ -218,15 +218,16 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
 
   const handleLegacyAction = useCallback((action: StepAction) => {
     if (!currentStep) return;
-    if (action.type === 'fill_field' && action.data) {
-      const d = action.data as { field: string; value: unknown };
+    const config = action.config || action.data;
+    if (action.type === 'fill_field' && config) {
+      const d = config as { field: string; value: unknown };
       const resolvedValue = resolveFillValue(d.value, fieldValues);
       fillField(d.field, resolvedValue);
       if (!disableActionInteractions) {
         store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
       }
-    } else if (action.type === 'click' && action.data) {
-      const d = action.data as { selector: string };
+    } else if (action.type === 'click' && config) {
+      const d = config as { selector: string };
       const el = document.querySelector(d.selector);
       if (el) {
         (el as HTMLElement).click();
@@ -234,8 +235,8 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
           store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
         }
       }
-    } else if (action.type === 'trigger_action' && action.data) {
-      const actions = Array.isArray(action.data) ? action.data : [action.data];
+    } else if (action.type === 'trigger_action' && config) {
+      const actions = Array.isArray(config) ? config : [config];
       executeActionSequence(actions, currentStep.id);
       if (!disableActionInteractions) {
         store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);

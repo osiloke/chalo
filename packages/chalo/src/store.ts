@@ -186,6 +186,7 @@ export const useChaloStore = create<ChaloStore>()(
             results: {},
             variables: {},
             isRunning: true,
+            currentSequence: actions,
             updateField,
           },
         }));
