@@ -83,6 +83,8 @@ Instead of relying on fragile CSS selectors, Actions natively understand the `fi
 - **`conditional`**: Evaluates a condition and saves `conditionMet` to the execution results.
 - **`custom`**: Invokes an action registered via `useChalo().registerActionHandler(type, handler)`.
 
+> **Tip:** The engine is resilient. If you accidentally use `data` instead of `config` in your `actionSequence`, the engine will gracefully accept it as an alias.
+
 ### Advanced Action Features (Retries and Dependencies)
 
 The engine supports topological sorting of directed acyclic graphs (DAGs) and robust retry mechanics.
@@ -177,20 +179,20 @@ Bubbles render interactive chat-like components natively inside the `SmartDrawer
 
 ### Bubble Action Types (`StepAction`)
 
-When defining actions within an `action-group` bubble, the following types are available:
+When defining actions within an `action-group` bubble, the following types are available. Use `config` (preferred) or `data` (backward compatibility) to provide the action details.
 
-| Action Type | Data Configuration | Description |
+| Action Type | Configuration Property (`config` or `data`) | Description |
 |---|---|---|
 | `next` | N/A | Advances to the next step. |
 | `prev` | N/A | Goes back to the previous step. |
 | `click` | `{ field: string }` or `{ selector: string }` | Performs a DOM click. |
 | `fill_field` | `{ field: string, value: any }` | Sets a value in the store and form. |
-| `trigger_action` | `Action[]` | **Powerful**: Triggers a sequence of Action Engine steps (scroll, wait, etc.). |
+| `trigger_action` | `Action[]` | **Powerful**: Triggers a sequence of Action Engine steps (scroll, wait, etc.). **Full progress is shown in the Drawer UI.** |
 | `custom` | N/A | Triggers the `onClick` handler provided in the action object. |
 
 ### Dynamic Field Values in `fill_field`
 
-The `fill_field` action (both in `actionSequence` and bubble `data`) supports **dynamic value resolution** via the `FieldValueSource` type. This enables two powerful patterns:
+The `fill_field` action (both in `actionSequence` and bubble `config`/`data`) supports **dynamic value resolution** via the `FieldValueSource` type. This enables two powerful patterns:
 
 #### 1. Reference Another Field's Value
 
