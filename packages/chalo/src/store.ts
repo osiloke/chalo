@@ -37,6 +37,21 @@ export const useChaloStore = create<ChaloStore>()(
         }));
       },
 
+      deregisterMission: (missionId: MissionId) => {
+        set((state) => {
+          const { [missionId]: _, ...remainingMissions } = state.missions;
+          const updates: Partial<ChaloState> = { missions: remainingMissions };
+
+          if (state.activeMissionId === missionId) {
+            updates.activeMissionId = null;
+            updates.currentStepId = null;
+            updates.missionProgress = 0;
+          }
+
+          return updates;
+        });
+      },
+
       startMission: (missionId: MissionId) => {
         const { missions } = get();
         const mission = missions[missionId];

@@ -143,6 +143,12 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     _registerMission(mission);
   }, [_registerMission, log]);
 
+  const _deregisterMission = useChaloStore(s => s.deregisterMission);
+  const deregisterMission = useCallback<typeof _deregisterMission>((missionId) => {
+    log('deregisterMission', { missionId });
+    _deregisterMission(missionId);
+  }, [_deregisterMission, log]);
+
   const _recordTourEntry = useChaloStore(s => s.recordTourEntry);
   const recordTourEntry = useCallback<typeof _recordTourEntry>((missionId, stepId, completed) => {
     log('recordTourEntry', { missionId, stepId, completed });
@@ -580,6 +586,7 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     cancelExecution,
     addInteraction,
     registerMission,
+    deregisterMission,
     activeMission,
     currentStep,
     missionProgress,

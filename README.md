@@ -237,6 +237,7 @@ interface UseChaloOptions {
 interface ChaloActions {
   // Mission Management
   registerMission: (mission: Mission) => void;
+  deregisterMission: (missionId: string) => void;
   startMission: (missionId: string) => void;
   pauseMission: () => void;
   resumeMission: () => void;

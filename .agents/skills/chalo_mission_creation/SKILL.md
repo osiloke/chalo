@@ -522,4 +522,4 @@ This example shows a mission that guides users through creating a project in a m
 2. **Define Interactions:** Construct your `Mission` with conditions (`waitFor`), animations (`scroll`), and dom automations (`actionSequence`).
 3. **Handle Reloads:** Add `executeOnReload: true` to steps/actions that restore critical UI state (modals, dialogs, overlays).
 4. **Register Context:** Use `useChalo({ form: myRHFForm })` to seamlessly lock the UI automation to your native form validation.
-5. **Activate:** Call `registerMission(mission)` and `startMission(mission.id)`. The `SmartDrawer` will mount and orchestrate the flow.
+5. **Activate:** Call `registerMission(mission)` and `startMission(mission.id)`. You can also use `deregisterMission(missionId)` to remove a mission from the registry, which will also stop it if it is currently active. The `SmartDrawer` will mount and orchestrate the flow.

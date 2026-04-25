@@ -238,6 +238,7 @@ export interface ChaloState {
 
 export interface ChaloStore extends ChaloState {
   registerMission: (mission: Mission) => void;
+  deregisterMission: (missionId: MissionId) => void;
   startMission: (missionId: MissionId) => void;
   pauseMission: () => void;
   resumeMission: () => void;

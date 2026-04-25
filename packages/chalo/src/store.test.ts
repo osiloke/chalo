@@ -56,4 +56,34 @@ describe('chalo store', () => {
     useChaloStore.getState().markMissionCompleted('completable');
     expect(useChaloStore.getState().completedMissions).toContain('completable');
   });
+
+  it('deregisters a mission', () => {
+    const mission = {
+      id: 'remove-me',
+      title: 'Remove Me',
+      steps: [{ id: 's1', title: 'S1', content: 'Test' }],
+    };
+    useChaloStore.getState().registerMission(mission);
+    expect(useChaloStore.getState().missions['remove-me']).toBeDefined();
+
+    useChaloStore.getState().deregisterMission('remove-me');
+    expect(useChaloStore.getState().missions['remove-me']).toBeUndefined();
+  });
+
+  it('resets active mission state when deregistering an active mission', () => {
+    const mission = {
+      id: 'active-to-remove',
+      title: 'Active To Remove',
+      steps: [{ id: 's1', title: 'S1', content: 'Test' }],
+    };
+    useChaloStore.getState().registerMission(mission);
+    useChaloStore.getState().startMission('active-to-remove');
+    expect(useChaloStore.getState().activeMissionId).toBe('active-to-remove');
+
+    useChaloStore.getState().deregisterMission('active-to-remove');
+    const state = useChaloStore.getState();
+    expect(state.missions['active-to-remove']).toBeUndefined();
+    expect(state.activeMissionId).toBeNull();
+    expect(state.currentStepId).toBeNull();
+  });
 });
