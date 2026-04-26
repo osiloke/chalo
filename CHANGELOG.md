@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/osiloke/chalo/compare/v2.5.1...v2.6.0) (2026-04-26)
+
+
+### Features
+
+* add deregisterMission method to remove missions and reset state if active ([74828e9](https://github.com/osiloke/chalo/commit/74828e9d462143f12e4e45b1f45c1554268af409))
+
 ## [2.5.1](https://github.com/osiloke/chalo/compare/v2.5.0...v2.5.1) (2026-04-22)
 
 # [2.5.0](https://github.com/osiloke/chalo/compare/v2.4.3...v2.5.0) (2026-04-21)
