@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useCallback, memo, type ReactNode, RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle, Compass } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -189,14 +190,17 @@ const BubbleRenderer = memo(({
         ? `[data-chalo-field="${d.field}"], #chalo-${d.field}`
         : d.selector;
 
-      if (targetSelector) {
-        const el = document.querySelector(targetSelector);
-        if (el) {
-          (el as HTMLElement).click();
-          if (!disableActionInteractions) {
-            onInteraction(`Clicked: ${targetSelector}`);
-          }
-        }
+      onExecuteSequence([
+        {
+          id: `bubble-click-${Date.now()}`,
+          type: 'click',
+          config: d,
+          label: a.label,
+        } as Action,
+      ]);
+
+      if (!disableActionInteractions && targetSelector) {
+        onInteraction(`Clicked: ${targetSelector}`);
       }
     } else if (a.type === 'trigger_action' && config) {
       const actions = Array.isArray(config) ? config : [config];
@@ -299,6 +303,16 @@ export interface SmartDrawerRootProps {
   className?: string;
   /** Custom className for the placeholder (pushes content in flex layout) */
   placeholderClassName?: string;
+  /** Layout mode: 'push' renders a placeholder in a flex container, 'overlay' floats on top (default: 'push') */
+  variant?: 'push' | 'overlay';
+  /** Whether to render drawer panel inside a portal to escape stacking contexts (default: true) */
+  portal?: boolean;
+  /** Custom container for the portal (default: document.body) */
+  portalContainer?: HTMLElement | null;
+  /** Custom className for overlay backdrop (when variant="overlay") */
+  backdropClassName?: string;
+  /** Whether to show backdrop in overlay mode (default: true) */
+  showBackdrop?: boolean;
   ref?: RefObject<HTMLDivElement | null>;
 }
 
@@ -306,55 +320,80 @@ export function SmartDrawerRoot({
   children,
   className,
   placeholderClassName,
+  variant = 'push',
+  portal = true,
+  portalContainer,
+  backdropClassName,
+  showBackdrop = true,
   ref
 }: SmartDrawerRootProps) {
   const drawerState = useSmartDrawer();
+  const targetPortalContainer = portalContainer ?? (typeof document !== 'undefined' ? document.body : null);
 
-  return (
-    <>
-      {/* Placeholder: stays in flex flow to push content */}
+  const placeholder = (
+    <AnimatePresence>
+      {variant === 'push' && drawerState.isOpen && (
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: 400 }}
+          exit={{ width: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className={cn('h-screen w-100 shrink-0', placeholderClassName)}
+          data-chalo-drawer-placeholder="true"
+        />
+      )}
+    </AnimatePresence>
+  );
+
+  const drawerElement = (
+    <SmartDrawerContext.Provider value={{ ...drawerState, __drawer: true }}>
+      {/* Optional Backdrop for overlay mode */}
       <AnimatePresence>
-        {drawerState.isOpen && (
+        {variant === 'overlay' && showBackdrop && drawerState.isOpen && (
           <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: 400 }}
-            exit={{ width: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={cn('h-screen w-100 shrink-0', placeholderClassName)}
-            data-chalo-drawer-placeholder="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={drawerState.dismiss}
+            className={cn('fixed inset-0 bg-black/40 backdrop-blur-xs z-9990', backdropClassName)}
+            data-chalo-drawer-backdrop="true"
           />
         )}
       </AnimatePresence>
 
-      {/* Actual drawer: fixed with high z-index to escape stacking contexts */}
-      <SmartDrawerContext.Provider value={{ ...drawerState, __drawer: true }}>
-        <AnimatePresence>
-          {drawerState.isOpen && (
-            <motion.aside
-              ref={ref}
-              initial={{ x: 400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 400, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={cn(
-                'fixed top-0 right-0 h-screen w-100 overflow-hidden bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
-                className
-              )}
-              data-chalo-drawer="true"
-            >
-              {children}
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
-        {/* Target element highlight overlay */}
-        {drawerState.currentStep?.targetElement && (
-          <TargetHighlight
-            selector={drawerState.currentStep.targetElement}
-            label={drawerState.currentStep.title}
-          />
+      <AnimatePresence>
+        {drawerState.isOpen && (
+          <motion.aside
+            ref={ref}
+            initial={{ x: 400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 400, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={cn(
+              'fixed top-0 right-0 h-screen w-100 overflow-hidden bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
+              className
+            )}
+            data-chalo-drawer="true"
+          >
+            {children}
+          </motion.aside>
         )}
-      </SmartDrawerContext.Provider>
+      </AnimatePresence>
+
+      {/* Target element highlight overlay */}
+      {drawerState.currentStep?.targetElement && (
+        <TargetHighlight
+          selector={drawerState.currentStep.targetElement}
+          label={drawerState.currentStep.title}
+        />
+      )}
+    </SmartDrawerContext.Provider>
+  );
+
+  return (
+    <>
+      {placeholder}
+      {portal && targetPortalContainer ? createPortal(drawerElement, targetPortalContainer) : drawerElement}
     </>
   );
 }
@@ -615,61 +654,84 @@ export interface SmartDrawerResumePromptProps {
   className?: string;
   /** Custom className for the placeholder */
   placeholderClassName?: string;
+  /** Layout mode: 'push' renders a placeholder in a flex container, 'overlay' floats on top (default: 'push') */
+  variant?: 'push' | 'overlay';
+  /** Whether to render in a portal (default: true) */
+  portal?: boolean;
+  /** Portal container (default: document.body) */
+  portalContainer?: HTMLElement | null;
   /** Custom resume prompt data (overrides context/hook data) */
   resumePrompt?: SmartDrawerState['resumePrompt'];
 }
 
-export function SmartDrawerResumePrompt({ className, placeholderClassName, resumePrompt: customResumePrompt }: SmartDrawerResumePromptProps) {
+export function SmartDrawerResumePrompt({
+  className,
+  placeholderClassName,
+  variant = 'push',
+  portal = true,
+  portalContainer,
+  resumePrompt: customResumePrompt
+}: SmartDrawerResumePromptProps) {
   const drawerState = useSmartDrawer();
   const prompt = customResumePrompt || drawerState.resumePrompt;
+  const targetPortalContainer = portalContainer ?? (typeof document !== 'undefined' ? document.body : null);
 
   if (!prompt.show || !prompt.mission) return null;
 
+  const placeholder = (
+    <AnimatePresence>
+      {variant === 'push' && (
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: 400 }}
+          exit={{ width: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className={cn('h-screen w-100 shrink-0', placeholderClassName)}
+          data-chalo-drawer-placeholder="true"
+        />
+      )}
+    </AnimatePresence>
+  );
+
+  const promptContent = (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      className={cn("fixed top-0 right-0 h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000", className)}
+      data-chalo-drawer="true"
+    >
+      <div className="p-6 flex flex-col items-center text-center space-y-4">
+        <div className="p-4 bg-chalo-warning-light rounded-2xl">
+          <RotateCcw size={32} className="text-chalo-warning" />
+        </div>
+        <h3 className="text-lg font-bold text-chalo-text">Resume Tour?</h3>
+        <p className="text-sm text-chalo-text-secondary">
+          You were taking the <strong>{prompt.mission.title}</strong> tour. Would you like to continue where you left off?
+        </p>
+        <div className="flex flex-col w-full space-y-2 pt-2">
+          <button
+            onClick={prompt.onResume}
+            className="w-full py-3 rounded-xl bg-chalo-primary text-chalo-text-inverse font-semibold hover:bg-chalo-primary-hover shadow-lg shadow-chalo-primary/20 transition-all flex items-center justify-center space-x-2"
+          >
+            <RotateCcw size={16} />
+            <span>Resume Tour</span>
+          </button>
+          <button
+            onClick={prompt.onDismiss}
+            className="w-full py-3 rounded-xl border border-chalo-border text-chalo-text-secondary font-medium hover:bg-chalo-surface-subtle transition-all text-sm"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   return (
     <>
-      {/* Placeholder: stays in flex flow to push content */}
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: 400 }}
-        exit={{ width: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn('h-screen w-100 shrink-0', placeholderClassName)}
-        data-chalo-drawer-placeholder="true"
-      />
-
-      {/* Actual resume prompt: fixed with high z-index */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        className={cn("fixed top-0 right-0 h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000", className)}
-        data-chalo-drawer="true"
-      >
-        <div className="p-6 flex flex-col items-center text-center space-y-4">
-          <div className="p-4 bg-chalo-warning-light rounded-2xl">
-            <RotateCcw size={32} className="text-chalo-warning" />
-          </div>
-          <h3 className="text-lg font-bold text-chalo-text">Resume Tour?</h3>
-          <p className="text-sm text-chalo-text-secondary">
-            You were taking the <strong>{prompt.mission.title}</strong> tour. Would you like to continue where you left off?
-          </p>
-          <div className="flex flex-col w-full space-y-2 pt-2">
-            <button
-              onClick={prompt.onResume}
-              className="w-full py-3 rounded-xl bg-chalo-primary text-chalo-text-inverse font-semibold hover:bg-chalo-primary-hover shadow-lg shadow-chalo-primary/20 transition-all flex items-center justify-center space-x-2"
-            >
-              <RotateCcw size={16} />
-              <span>Resume Tour</span>
-            </button>
-            <button
-              onClick={prompt.onDismiss}
-              className="w-full py-3 rounded-xl border border-chalo-border text-chalo-text-secondary font-medium hover:bg-chalo-surface-subtle transition-all text-sm"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      </motion.div>
+      {placeholder}
+      {portal && targetPortalContainer ? createPortal(promptContent, targetPortalContainer) : promptContent}
     </>
   );
 }
@@ -712,6 +774,16 @@ export interface SmartDrawerProps {
   title?: string;
   /** Header icon */
   icon?: React.ElementType;
+  /** Layout mode: 'push' renders placeholder in a flex container, 'overlay' floats on top (default: 'push') */
+  variant?: 'push' | 'overlay';
+  /** Whether to render using React Portal (default: true) */
+  portal?: boolean;
+  /** Custom portal container (default: document.body) */
+  portalContainer?: HTMLElement | null;
+  /** Custom backdrop className for overlay mode */
+  backdropClassName?: string;
+  /** Whether to show backdrop in overlay mode (default: true) */
+  showBackdrop?: boolean;
   /** Ref */
   ref?: RefObject<HTMLDivElement | null>;
 }
@@ -734,11 +806,24 @@ export function SmartDrawer({
   headerTitle,
   title,
   icon,
+  variant,
+  portal,
+  portalContainer,
+  backdropClassName,
+  showBackdrop,
   ref
 }: SmartDrawerProps) {
   return (
     <>
-      <SmartDrawerRoot ref={ref} className={className}>
+      <SmartDrawerRoot
+        ref={ref}
+        className={className}
+        variant={variant}
+        portal={portal}
+        portalContainer={portalContainer}
+        backdropClassName={backdropClassName}
+        showBackdrop={showBackdrop}
+      >
         <SmartDrawerHeader
           headerTitle={headerTitle}
           title={title}
@@ -747,7 +832,11 @@ export function SmartDrawer({
         <SmartDrawerBody />
         <SmartDrawerFooter />
       </SmartDrawerRoot>
-      <SmartDrawerResumePrompt />
+      <SmartDrawerResumePrompt
+        variant={variant}
+        portal={portal}
+        portalContainer={portalContainer}
+      />
     </>
   );
 }
