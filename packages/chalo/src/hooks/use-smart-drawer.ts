@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useChaloStore } from '../store';
 import { useChalo } from './use-chalo';
 import { StepAction, Action, FieldValueSource } from '../types';
@@ -109,7 +109,18 @@ export interface SmartDrawerState {
  * ```
  */
 export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawerState {
-  const store = useChaloStore();
+  const activeMissionId = useChaloStore(s => s.activeMissionId);
+  const isPaused = useChaloStore(s => s.isPaused);
+  const interactionHistory = useChaloStore(s => s.interactionHistory);
+  const tourHistory = useChaloStore(s => s.tourHistory);
+  const missions = useChaloStore(s => s.missions);
+  const addInteraction = useChaloStore(s => s.addInteraction);
+  const startMissionInStore = useChaloStore(s => s.startMission);
+  const goToStepInStore = useChaloStore(s => s.goToStep);
+  const recordTourEntryInStore = useChaloStore(s => s.recordTourEntry);
+  const dismissAllToursInStore = useChaloStore(s => s.dismissAllTours);
+  const resetMissionInStore = useChaloStore(s => s.resetMission);
+
   const {
     activeMission,
     currentStep,
@@ -130,26 +141,50 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
   const [isTyping, setIsTyping] = useState(false);
   const [displayedStepId, setDisplayedStepId] = useState<string | null>(null);
 
+  // When active mission changes, immediately reset displayedStepId
+  const prevMissionIdRef = useRef<string | null>(null);
+  if (activeMissionId !== prevMissionIdRef.current) {
+    prevMissionIdRef.current = activeMissionId;
+    if (displayedStepId !== null) {
+      setDisplayedStepId(null);
+    }
+  }
+
   // Sync open state with mission/pause state
   useEffect(() => {
-    setIsOpen(!!store.activeMissionId && !store.isPaused);
-  }, [store.activeMissionId, store.isPaused]);
+    setIsOpen(!!activeMissionId && !isPaused);
+  }, [activeMissionId, isPaused]);
+
+  // Synchronously compute if transitioning to avoid 1-frame flashes
+  const isTransitioning = Boolean(currentStep && displayedStepId !== currentStep.id);
+  const effectiveIsTyping = isTyping || isTransitioning;
 
   // Handle typing indicator delay
   useEffect(() => {
-    if (currentStep && currentStep.id !== displayedStepId) {
+    if (!activeMission || !currentStep) {
+      setIsTyping(false);
+      return;
+    }
+
+    if (displayedStepId !== currentStep.id) {
       setIsTyping(true);
-      const timer = setTimeout(() => {
-        setIsTyping(false);
+      if (typingDelay <= 0) {
         setDisplayedStepId(currentStep.id);
+        setIsTyping(false);
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        setDisplayedStepId(currentStep.id);
+        setIsTyping(false);
       }, typingDelay);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, displayedStepId, typingDelay]);
+  }, [currentStep?.id, activeMission?.id, displayedStepId, typingDelay]);
 
   // Generate Chat History
   const chatHistory = useMemo(() => {
-    if (!activeMission) return [];
+    if (!activeMission || !displayedStepId) return [];
     const messages: ChatMessage[] = [];
     const currentIndex = activeMission.steps.findIndex(s => s.id === displayedStepId);
     if (currentIndex === -1) return messages;
@@ -163,7 +198,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
         content: step.content
       });
 
-      const interaction = store.interactionHistory.find(i => i.stepId === step.id);
+      const interaction = interactionHistory.find(i => i.stepId === step.id);
       if (interaction) {
         messages.push({
           id: `usr-${step.id}`,
@@ -174,21 +209,21 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     });
 
     return messages;
-  }, [activeMission, displayedStepId, store.interactionHistory]);
+  }, [activeMission, displayedStepId, interactionHistory]);
 
   // Check for incomplete tour to show resume prompt
   const resumePrompt = useMemo((): ResumePromptData => {
-    if (activeMission) {
+    if (activeMission || activeMissionId) {
       // Don't show resume prompt if there's an active mission
       return { show: false, onResume: () => { }, onDismiss: () => { } };
     }
 
-    const incompleteTour = Object.values(store.tourHistory).find(
+    const incompleteTour = Object.values(tourHistory).find(
       (t) => !t.completed && t.lastAccessed > Date.now() - 7 * 24 * 60 * 60 * 1000 // within 7 days
     );
 
     if (incompleteTour) {
-      const mission = store.missions[incompleteTour.missionId];
+      const mission = missions[incompleteTour.missionId];
       if (mission) {
         return {
           show: true,
@@ -198,23 +233,23 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
           },
           lastStepId: incompleteTour.lastStepId,
           onResume: () => {
-            store.startMission(incompleteTour.missionId);
+            startMissionInStore(incompleteTour.missionId);
             if (incompleteTour.lastStepId) {
-              store.goToStep(incompleteTour.lastStepId);
+              goToStepInStore(incompleteTour.lastStepId);
             }
           },
-          onDismiss: () => store.recordTourEntry(incompleteTour.missionId, incompleteTour.lastStepId, true),
+          onDismiss: () => recordTourEntryInStore(incompleteTour.missionId, incompleteTour.lastStepId, true),
         };
       }
     }
 
     return { show: false, onResume: () => { }, onDismiss: () => { } };
-  }, [activeMission, store]);
+  }, [activeMission, activeMissionId, tourHistory, missions, startMissionInStore, goToStepInStore, recordTourEntryInStore]);
 
   const handleBubbleInteraction = useCallback((text: string) => {
     if (disableActionInteractions) return;
-    store.addInteraction(currentStep?.id ?? '', text);
-  }, [currentStep?.id, store, disableActionInteractions]);
+    addInteraction(currentStep?.id ?? '', text);
+  }, [currentStep?.id, addInteraction, disableActionInteractions]);
 
   const handleLegacyAction = useCallback((action: StepAction) => {
     if (!currentStep) return;
@@ -224,7 +259,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       const resolvedValue = resolveFillValue(d.value, fieldValues);
       fillField(d.field, resolvedValue);
       if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
+        addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
       }
     } else if (action.type === 'click' && config) {
       const d = config as { selector: string };
@@ -232,30 +267,30 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       if (el) {
         (el as HTMLElement).click();
         if (!disableActionInteractions) {
-          store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
+          addInteraction(currentStep.id, `Clicked: ${d.selector}`);
         }
       }
     } else if (action.type === 'trigger_action' && config) {
       const actions = Array.isArray(config) ? config : [config];
       executeActionSequence(actions, currentStep.id);
       if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
+        addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
       }
     } else if (action.onClick) {
       action.onClick();
       if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Selected: ${action.label}`);
+        addInteraction(currentStep.id, `Selected: ${action.label}`);
       }
     }
-  }, [fillField, currentStep, store, executeActionSequence, fieldValues, disableActionInteractions]);
+  }, [fillField, currentStep, addInteraction, executeActionSequence, fieldValues, disableActionInteractions]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen(prev => !prev), []);
   const dismiss = useCallback(() => {
-    store.dismissAllTours();
-    store.resetMission();
-  }, [store]);
+    dismissAllToursInStore();
+    resetMissionInStore();
+  }, [dismissAllToursInStore, resetMissionInStore]);
 
   const isComplete = !activeMission || !currentStep;
 
@@ -268,7 +303,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     activeMission,
     currentStep,
     chatHistory,
-    isTyping,
+    isTyping: effectiveIsTyping,
     fieldValues,
     fieldErrors,
     executionContext,

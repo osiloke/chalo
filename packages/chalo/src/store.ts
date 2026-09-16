@@ -60,23 +60,69 @@ export const useChaloStore = create<ChaloStore>()(
           set({ error: `Mission "${missionId}" not found in registry.` });
           return;
         }
-        set({
+        // Cancel any active execution in action engine
+        actionEngine.cancel();
+
+        set((state) => ({
           activeMissionId: mission.id,
           currentStepId: mission.steps[0]?.id || null,
           missionProgress: 0,
           fieldValues: {},
           fieldStates: {},
           interactionHistory: [],
+          executionContext: {
+            results: {},
+            variables: {},
+            isRunning: false,
+            currentActionId: null,
+            currentSequence: undefined,
+          },
+          executedSteps: {
+            ...((state as any).executedSteps || {}),
+            [missionId]: [],
+          },
           isPaused: false,
           isCompleted: false,
           error: null,
-        });
+        }));
       },
 
       pauseMission: () => set({ isPaused: true }),
       resumeMission: () => set({ isPaused: false }),
 
-      completeMission: () => set({ isCompleted: true, activeMissionId: null, currentStepId: null }),
+      completeMission: () => {
+        const { activeMissionId, missions, completedMissions } = get();
+        actionEngine.cancel();
+
+        let updatedCompletedMissions = completedMissions;
+        if (activeMissionId) {
+          const mission = missions[activeMissionId];
+          if (mission?.allowCompletion && !completedMissions.includes(activeMissionId)) {
+            updatedCompletedMissions = [...completedMissions, activeMissionId];
+          }
+          if (mission?.onComplete) {
+            try {
+              mission.onComplete();
+            } catch (err) {
+              console.error(`Error in mission "${activeMissionId}" onComplete:`, err);
+            }
+          }
+        }
+
+        set({
+          isCompleted: true,
+          activeMissionId: null,
+          currentStepId: null,
+          completedMissions: updatedCompletedMissions,
+          executionContext: {
+            results: {},
+            variables: {},
+            isRunning: false,
+            currentActionId: null,
+            currentSequence: undefined,
+          },
+        });
+      },
 
       goToStep: (stepId: StepId) => {
         const { activeMissionId } = get();
@@ -127,6 +173,7 @@ export const useChaloStore = create<ChaloStore>()(
       },
 
       resetMission: () => {
+        actionEngine.cancel();
         set({
           activeMissionId: null,
           currentStepId: null,
@@ -139,6 +186,7 @@ export const useChaloStore = create<ChaloStore>()(
             variables: {},
             isRunning: false,
             currentActionId: null,
+            currentSequence: undefined,
           },
           isPaused: false,
           isCompleted: false,

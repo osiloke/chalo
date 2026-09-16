@@ -86,4 +86,60 @@ describe('chalo store', () => {
     expect(state.activeMissionId).toBeNull();
     expect(state.currentStepId).toBeNull();
   });
+
+  it('completes a mission, invokes onComplete, and records to completedMissions', () => {
+    let completedCallbackCalled = false;
+    const mission = {
+      id: 'completion-flow',
+      title: 'Completion Flow',
+      steps: [{ id: 'step-done', title: 'Done', content: 'Done' }],
+      allowCompletion: true,
+      onComplete: () => {
+        completedCallbackCalled = true;
+      },
+    };
+    useChaloStore.getState().registerMission(mission);
+    useChaloStore.getState().startMission('completion-flow');
+    expect(useChaloStore.getState().activeMissionId).toBe('completion-flow');
+
+    useChaloStore.getState().completeMission();
+    const state = useChaloStore.getState();
+    expect(state.isCompleted).toBe(true);
+    expect(state.activeMissionId).toBeNull();
+    expect(state.currentStepId).toBeNull();
+    expect(state.completedMissions).toContain('completion-flow');
+    expect(completedCallbackCalled).toBe(true);
+  });
+
+  it('switches to a new mission cleanly after previous mission completion', () => {
+    const m1 = {
+      id: 'm1',
+      title: 'M1',
+      steps: [{ id: 'm1-s1', title: 'S1', content: 'C1' }],
+      allowCompletion: true,
+    };
+    const m2 = {
+      id: 'm2',
+      title: 'M2',
+      steps: [{ id: 'm2-s1', title: 'S2', content: 'C2' }],
+      allowCompletion: true,
+    };
+    useChaloStore.getState().registerMission(m1);
+    useChaloStore.getState().registerMission(m2);
+
+    useChaloStore.getState().startMission('m1');
+    expect(useChaloStore.getState().activeMissionId).toBe('m1');
+
+    useChaloStore.getState().completeMission();
+    expect(useChaloStore.getState().isCompleted).toBe(true);
+    expect(useChaloStore.getState().activeMissionId).toBeNull();
+
+    // Now start m2
+    useChaloStore.getState().startMission('m2');
+    const state = useChaloStore.getState();
+    expect(state.activeMissionId).toBe('m2');
+    expect(state.currentStepId).toBe('m2-s1');
+    expect(state.isCompleted).toBe(false);
+    expect(state.executionContext.isRunning).toBe(false);
+  });
 });

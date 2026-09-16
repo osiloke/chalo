@@ -278,31 +278,36 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     }
   }, [currentStepId, onStepChange]);
 
+  const lastActiveMissionIdRef = useRef<MissionId | null>(null);
+  useEffect(() => {
+    if (activeMissionId) {
+      lastActiveMissionIdRef.current = activeMissionId;
+    }
+  }, [activeMissionId]);
+
   // Notify listeners when mission completes
   useEffect(() => {
-    if (isCompleted && activeMissionId && onMissionComplete) {
-      onMissionComplete(activeMissionId);
+    if (isCompleted && lastActiveMissionIdRef.current && onMissionComplete) {
+      onMissionComplete(lastActiveMissionIdRef.current);
     }
-  }, [isCompleted, activeMissionId, onMissionComplete]);
+  }, [isCompleted, onMissionComplete]);
 
-  // Auto-execute action sequence when step changes and has actions
+  // Auto-execute and polling tracking refs
   const executedSequenceRef = useRef<Set<string>>(new Set());
+  const hasHandledReloadRef = useRef(false);
+  const waitForCheckedStepsRef = useRef<Set<StepId>>(new Set());
+  const waitForTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset executed sequences when mission changes
+  // Reset executed sequences, reload flag, and waitFor states when mission changes
   useEffect(() => {
-    // Don't clear if an action sequence is currently running to prevent interrupting execution
-    if (!executionContext.isRunning) {
-      executedSequenceRef.current.clear();
-      hasHandledReloadRef.current = false;
+    executedSequenceRef.current.clear();
+    waitForCheckedStepsRef.current.clear();
+    hasHandledReloadRef.current = false;
+    if (waitForTimeoutRef.current) {
+      clearTimeout(waitForTimeoutRef.current);
+      waitForTimeoutRef.current = null;
     }
-  }, [activeMissionId, executionContext.isRunning]);
-
-  // Handle mission completion
-  useEffect(() => {
-    if (isCompleted && activeMissionId && onMissionComplete) {
-      onMissionComplete(activeMissionId);
-    }
-  }, [isCompleted, activeMissionId, onMissionComplete]);
+  }, [activeMissionId]);
 
   // Progress calculation
   const missionProgress = useMemo(() => {
@@ -366,7 +371,6 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
 
   // Auto-execute action sequence when step changes and has actions
   // Handles reload detection and executeOnReload flag
-  const hasHandledReloadRef = useRef(false);
 
   useEffect(() => {
     if (!currentStep?.actionSequence || !currentStepId || !activeMissionId) return;
@@ -432,10 +436,6 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
   }, [currentStepId, activeMissionId, currentStep?.actionSequence, currentStep?.condition, currentStep?.executeOnReload, executeActionSequence, _recordExecutedStep, log]);
 
   // Polling: check waitFor condition on current step and auto-advance when met
-  // Per-step tracking: use a Set so consecutive steps with waitFor don't interfere
-  const waitForCheckedStepsRef = useRef<Set<StepId>>(new Set());
-  // Ref for setTimeout to allow cleanup on unmount/step change
-  const waitForTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref for nextStep to avoid stale closure in setTimeout
   const nextStepRef = useRef(nextStep);
   // Keep ref in sync

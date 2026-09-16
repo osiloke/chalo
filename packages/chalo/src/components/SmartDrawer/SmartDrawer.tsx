@@ -461,7 +461,7 @@ export interface SmartDrawerBodyProps {
 }
 
 export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDrawerBodyProps) {
-  const { chatHistory, isTyping, currentStep, fieldValues, executionContext, actions } = useSmartDrawerContext();
+  const { chatHistory, isTyping, currentStep, displayedStepId, fieldValues, executionContext, actions } = useSmartDrawerContext();
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -530,7 +530,7 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
         )}
       </AnimatePresence>
 
-      {!isTyping && currentStep && (
+      {!isTyping && currentStep && displayedStepId === currentStep.id && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           {/* Render explicitly defined bubbles if present */}
           {currentStep.bubbles?.map((bubble) => (
@@ -595,7 +595,7 @@ export interface SmartDrawerFooterProps {
 }
 
 export function SmartDrawerFooter({ className, renderPrevButton, renderNextButton, statusText }: SmartDrawerFooterProps) {
-  const { activeMission, currentStep, fieldErrors, actions } = useSmartDrawerContext();
+  const { activeMission, currentStep, fieldErrors, executionContext, actions } = useSmartDrawerContext();
 
   if (!activeMission || !currentStep) return null;
 
@@ -603,12 +603,11 @@ export function SmartDrawerFooter({ className, renderPrevButton, renderNextButto
     ? `Focusing on ${currentStep.targetField}...`
     : "Reading...";
 
-  const isPrevDisabled = activeMission.steps.indexOf(currentStep) === 0;
-  const isNextDisabled =
-    (currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) ||
-    activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1;
-
+  const isPrevDisabled = activeMission.steps.indexOf(currentStep) === 0 || executionContext.isRunning;
   const isLastStep = activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1;
+  const isNextDisabled =
+    Boolean(currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) ||
+    Boolean(executionContext.isRunning);
 
   return (
     <div className={cn("p-4 bg-chalo-surface border-t border-chalo-border shrink-0", className)}>
