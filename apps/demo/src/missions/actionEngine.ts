@@ -2,23 +2,23 @@ import { Mission, Action } from '@osiloke/chalo';
 
 export const ACTION_ENGINE_DEMO_ACTIONS: Action[] = [
   {
-    id: 'scroll-to-form',
+    id: 'scroll-to-target',
     type: 'scroll',
-    config: { field: 'fullName', behavior: 'smooth' },
-    label: 'Scroll to name field',
+    config: { selector: '#action-engine-target', behavior: 'smooth' },
+    label: 'Scroll to target container',
   },
   {
     id: 'wait-for-render',
     type: 'wait',
     config: { durationMs: 800 },
-    label: 'Wait for render',
-    dependsOn: ['scroll-to-form'],
+    label: 'Wait for verification',
+    dependsOn: ['scroll-to-target'],
   },
   {
     id: 'fill-name',
     type: 'fill_field',
-    config: { field: 'fullName', value: 'Action Engine Automated Agent' },
-    label: 'Fill name field',
+    config: { field: 'actionEngineInput', value: 'Action Engine Automated Agent' },
+    label: 'Fill target input',
     dependsOn: ['wait-for-render'],
   },
 ];

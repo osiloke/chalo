@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useChalo } from '@osiloke/chalo';
 import {
   LayoutDashboard,
@@ -13,6 +13,14 @@ import {
 
 export const LandingPage: FC = () => {
   const { startMission, activeMission } = useChalo();
+  const navigate = useNavigate();
+
+  const handleStartMission = (missionId: string, path: string) => {
+    navigate(path);
+    setTimeout(() => {
+      startMission(missionId);
+    }, 100);
+  };
 
   const scenarios = [
     {
@@ -120,7 +128,7 @@ export const LandingPage: FC = () => {
                     {scenario.missions.map((m) => (
                       <button
                         key={m.id}
-                        onClick={() => startMission(m.id)}
+                        onClick={() => handleStartMission(m.id, scenario.path)}
                         disabled={activeMission?.id === m.id}
                         className="w-full text-xs font-semibold py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 transition-all flex items-center justify-between disabled:opacity-50"
                       >

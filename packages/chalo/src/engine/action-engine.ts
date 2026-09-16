@@ -251,11 +251,16 @@ export class ActionEngine {
 
     // Check dependencies
     if (action.dependsOn?.length) {
-      const failedDeps = action.dependsOn.filter(
-        (depId) => context.results[depId]?.status === 'failed' || context.results[depId]?.status === 'cancelled'
+      const unfulfilledDeps = action.dependsOn.filter(
+        (depId) => context.results[depId]?.status !== 'success'
       );
-      if (failedDeps.length > 0) {
-        return { id: action.id, status: 'skipped', attempts: 0, error: `Dependencies failed: ${failedDeps.join(', ')}` };
+      if (unfulfilledDeps.length > 0) {
+        return {
+          id: action.id,
+          status: 'skipped',
+          attempts: 0,
+          error: `Dependencies not fulfilled: ${unfulfilledDeps.join(', ')}`,
+        };
       }
     }
 

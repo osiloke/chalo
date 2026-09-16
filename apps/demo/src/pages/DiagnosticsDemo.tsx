@@ -117,24 +117,45 @@ export const DiagnosticsDemo: FC = () => {
         </div>
       </div>
 
-      {/* Target area for scroll & action engine tests */}
-      <div id="metrics-overview" className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-          <Activity size={20} className="text-indigo-500" />
-          <span>Action Engine Target Container</span>
-        </h3>
+      {/* Target area for Action Engine test */}
+      <div id="action-engine-target" className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+            <Activity size={20} className="text-indigo-500" />
+            <span>Action Engine Target Container</span>
+          </h3>
+          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-semibold">Ready for Automation</span>
+        </div>
         <p className="text-xs text-slate-500">
-          Scroll and dependency actions target elements in this view during automated sequences.
+          The Action Engine mission automatically scrolls to this container, verifies prerequisites, and fills the input below.
         </p>
-        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-          <span className="text-xs font-mono text-slate-600 dark:text-slate-300">#metrics-overview container ready</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-semibold">Active</span>
+        <div className="space-y-2 pt-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Automated Target Field</label>
+          <input
+            id="actionEngineInput"
+            name="actionEngineInput"
+            data-chalo-field="actionEngineInput"
+            type="text"
+            placeholder="Waiting for Action Engine sequence..."
+            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
+          />
         </div>
       </div>
 
-      <div id="activity-feed" className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl">
+      {/* Target area for scroll test */}
+      <div id="metrics-overview" className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl space-y-2">
+        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+          <Activity size={16} className="text-indigo-500" />
+          <span>Scroll Target: Metrics Overview</span>
+        </h4>
+        <p className="text-xs text-slate-500">
+          This container (#metrics-overview) is targeted by the middle step of the Scroll Mission.
+        </p>
+      </div>
+
+      <div id="activity-feed" className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xl space-y-2">
         <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Scroll Target: Activity Feed</h4>
-        <p className="text-xs text-slate-500">This anchor is targeted by the Scroll Mission demo.</p>
+        <p className="text-xs text-slate-500">This anchor (#activity-feed) is targeted by the first step of the Scroll Mission.</p>
       </div>
 
       {/* Portal Dialog Component */}
