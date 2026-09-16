@@ -376,7 +376,9 @@ export function useChalo<TFieldValues extends FieldValues = FieldValues>(options
     if (!currentStep?.actionSequence || !currentStepId || !activeMissionId) return;
 
     const isReload = isPageReload();
-    const wasPreviouslyExecuted = executedSequenceRef.current.has(currentStepId);
+    const executedSteps = (useChaloStore.getState() as any).executedSteps?.[activeMissionId] || [];
+    const wasPreviouslyExecuted =
+      executedSequenceRef.current.has(currentStepId) || (isReload && executedSteps.includes(currentStepId));
     const shouldExecuteOnReload = currentStep.executeOnReload === true;
     const hasReloadActions = currentStep.actionSequence.some((action: Action) => action.executeOnReload === true);
 
