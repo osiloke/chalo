@@ -1,3 +1,10 @@
+## [2.7.1](https://github.com/osiloke/chalo/compare/v2.7.0...v2.7.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **demo:** set router basename from BASE_URL for GitHub Pages ([dd9eef8](https://github.com/osiloke/chalo/commit/dd9eef82a28e31d84bccebf7f43f761315e2de26))
+
 # [2.7.0](https://github.com/osiloke/chalo/compare/v2.6.0...v2.7.0) (2026-10-23)
 
 
