@@ -2,11 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -23,14 +19,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/vite-env.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "src/vite-env.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

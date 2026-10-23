@@ -1,91 +1,91 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useChaloStore } from '../store';
-import { useChalo } from './use-chalo';
-import { StepAction, Action, FieldValueSource } from '../types';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import { useChaloStore } from '../store'
+import { useChalo } from './use-chalo'
+import { StepAction, Action, FieldValueSource } from '../types'
 
 // --- VALUE RESOLVER (mirrors action-engine for bubble fill_field) ---
 
 function resolveFillValue(value: unknown, fieldValues: Record<string, unknown>): unknown {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    const src = value as FieldValueSource;
+    const src = value as FieldValueSource
     if (src.type === 'ref' && 'field' in src) {
-      return fieldValues[src.field];
+      return fieldValues[src.field]
     }
     if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
-      return (src.generator as () => unknown)();
+      return (src.generator as () => unknown)()
     }
   }
-  return value;
+  return value
 }
 
 export interface ChatMessage {
-  id: string;
-  role: 'system' | 'user';
-  content: React.ReactNode;
+  id: string
+  role: 'system' | 'user'
+  content: React.ReactNode
 }
 
 export interface UseSmartDrawerOptions {
-  debug?: boolean;
+  debug?: boolean
   /** Typing delay in ms before showing next bubble (default: 1200) */
-  typingDelay?: number;
+  typingDelay?: number
   /** Disable action interaction messages from being added to chat history (default: false) */
-  disableActionInteractions?: boolean;
+  disableActionInteractions?: boolean
 }
 
 export interface ResumePromptData {
-  show: boolean;
+  show: boolean
   mission?: {
-    id: string;
-    title: string;
-  };
-  lastStepId?: string;
-  onResume: () => void;
-  onDismiss: () => void;
+    id: string
+    title: string
+  }
+  lastStepId?: string
+  onResume: () => void
+  onDismiss: () => void
 }
 
 export interface SmartDrawerState {
   /** Whether the drawer should be open */
-  isOpen: boolean;
+  isOpen: boolean
   /** Manually open the drawer */
-  open: () => void;
+  open: () => void
   /** Manually close the drawer */
-  close: () => void;
+  close: () => void
   /** Toggle drawer open/close */
-  toggle: () => void;
+  toggle: () => void
   /** Dismiss current tour entirely */
-  dismiss: () => void;
+  dismiss: () => void
   /** Current active mission */
-  activeMission: ReturnType<typeof useChalo>['activeMission'];
+  activeMission: ReturnType<typeof useChalo>['activeMission']
   /** Current step in the mission */
-  currentStep: ReturnType<typeof useChalo>['currentStep'];
+  currentStep: ReturnType<typeof useChalo>['currentStep']
   /** Generated chat history */
-  chatHistory: ChatMessage[];
+  chatHistory: ChatMessage[]
   /** Whether the typing indicator should show */
-  isTyping: boolean;
+  isTyping: boolean
   /** Field values from form */
-  fieldValues: Record<string, unknown>;
+  fieldValues: Record<string, unknown>
   /** Field errors from validation */
-  fieldErrors: Record<string, unknown>;
+  fieldErrors: Record<string, unknown>
   /** Execution context for action sequences */
-  executionContext: ReturnType<typeof useChalo>['executionContext'];
+  executionContext: ReturnType<typeof useChalo>['executionContext']
   /** Whether there's no active mission/step */
-  isComplete: boolean;
+  isComplete: boolean
   /** Current displayed step ID (for typing delay) */
-  displayedStepId: string | null;
+  displayedStepId: string | null
   /** Resume prompt data if there's an incomplete tour */
-  resumePrompt: ResumePromptData;
+  resumePrompt: ResumePromptData
   /** Action handlers for the drawer */
   actions: {
-    fillField: (field: string, value: unknown) => void;
-    nextStep: () => void;
-    prevStep: () => void;
-    cancelExecution: () => void;
-    executeActionSequence: (actions: Action[]) => void;
-    handleBubbleInteraction: (text: string) => void;
-    handleLegacyAction: (action: StepAction) => void;
+    fillField: (field: string, value: unknown) => void
+    nextStep: () => void
+    prevStep: () => void
+    cancelExecution: () => void
+    executeActionSequence: (actions: Action[]) => void
+    handleBubbleInteraction: (text: string) => void
+    handleLegacyAction: (action: StepAction) => void
     /** Whether action interaction messages are disabled */
-    disableActionInteractions: boolean;
-  };
+    disableActionInteractions: boolean
+  }
 }
 
 /**
@@ -109,7 +109,18 @@ export interface SmartDrawerState {
  * ```
  */
 export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawerState {
-  const store = useChaloStore();
+  const activeMissionId = useChaloStore((s) => s.activeMissionId)
+  const isPaused = useChaloStore((s) => s.isPaused)
+  const interactionHistory = useChaloStore((s) => s.interactionHistory)
+  const tourHistory = useChaloStore((s) => s.tourHistory)
+  const missions = useChaloStore((s) => s.missions)
+  const addInteraction = useChaloStore((s) => s.addInteraction)
+  const startMissionInStore = useChaloStore((s) => s.startMission)
+  const goToStepInStore = useChaloStore((s) => s.goToStep)
+  const recordTourEntryInStore = useChaloStore((s) => s.recordTourEntry)
+  const dismissAllToursInStore = useChaloStore((s) => s.dismissAllTours)
+  const resetMissionInStore = useChaloStore((s) => s.resetMission)
+
   const {
     activeMission,
     currentStep,
@@ -120,75 +131,100 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     fieldValues,
     executionContext,
     cancelExecution,
-    executeActionSequence
-  } = useChalo({ debug: options.debug ?? import.meta.env.DEV });
+    executeActionSequence,
+  } = useChalo({ debug: options.debug ?? import.meta.env.DEV })
 
-  const typingDelay = options.typingDelay ?? 1200;
-  const disableActionInteractions = options.disableActionInteractions ?? false;
+  const typingDelay = options.typingDelay ?? 1200
+  const disableActionInteractions = options.disableActionInteractions ?? false
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [displayedStepId, setDisplayedStepId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const [displayedStepId, setDisplayedStepId] = useState<string | null>(null)
+
+  // When active mission changes, immediately reset displayedStepId
+  const prevMissionIdRef = useRef<string | null>(null)
+  if (activeMissionId !== prevMissionIdRef.current) {
+    prevMissionIdRef.current = activeMissionId
+    if (displayedStepId !== null) {
+      setDisplayedStepId(null)
+    }
+  }
 
   // Sync open state with mission/pause state
   useEffect(() => {
-    setIsOpen(!!store.activeMissionId && !store.isPaused);
-  }, [store.activeMissionId, store.isPaused]);
+    setIsOpen(!!activeMissionId && !isPaused)
+  }, [activeMissionId, isPaused])
+
+  // Synchronously compute if transitioning to avoid 1-frame flashes
+  const isTransitioning = Boolean(currentStep && displayedStepId !== currentStep.id)
+  const effectiveIsTyping = isTyping || isTransitioning
 
   // Handle typing indicator delay
   useEffect(() => {
-    if (currentStep && currentStep.id !== displayedStepId) {
-      setIsTyping(true);
-      const timer = setTimeout(() => {
-        setIsTyping(false);
-        setDisplayedStepId(currentStep.id);
-      }, typingDelay);
-      return () => clearTimeout(timer);
+    if (!activeMission || !currentStep) {
+      setIsTyping(false)
+      return
     }
-  }, [currentStep, displayedStepId, typingDelay]);
+
+    if (displayedStepId !== currentStep.id) {
+      setIsTyping(true)
+      if (typingDelay <= 0) {
+        setDisplayedStepId(currentStep.id)
+        setIsTyping(false)
+        return
+      }
+
+      const timer = setTimeout(() => {
+        setDisplayedStepId(currentStep.id)
+        setIsTyping(false)
+      }, typingDelay)
+      return () => clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep?.id, activeMission?.id, displayedStepId, typingDelay])
 
   // Generate Chat History
   const chatHistory = useMemo(() => {
-    if (!activeMission) return [];
-    const messages: ChatMessage[] = [];
-    const currentIndex = activeMission.steps.findIndex(s => s.id === displayedStepId);
-    if (currentIndex === -1) return messages;
+    if (!activeMission || !displayedStepId) return []
+    const messages: ChatMessage[] = []
+    const currentIndex = activeMission.steps.findIndex((s) => s.id === displayedStepId)
+    if (currentIndex === -1) return messages
 
-    const visibleSteps = activeMission.steps.slice(0, currentIndex + 1);
+    const visibleSteps = activeMission.steps.slice(0, currentIndex + 1)
 
-    visibleSteps.forEach(step => {
+    visibleSteps.forEach((step) => {
       messages.push({
         id: `sys-${step.id}`,
         role: 'system',
-        content: step.content
-      });
+        content: step.content,
+      })
 
-      const interaction = store.interactionHistory.find(i => i.stepId === step.id);
+      const interaction = interactionHistory.find((i) => i.stepId === step.id)
       if (interaction) {
         messages.push({
           id: `usr-${step.id}`,
           role: 'user',
-          content: interaction.actionText
-        });
+          content: interaction.actionText,
+        })
       }
-    });
+    })
 
-    return messages;
-  }, [activeMission, displayedStepId, store.interactionHistory]);
+    return messages
+  }, [activeMission, displayedStepId, interactionHistory])
 
   // Check for incomplete tour to show resume prompt
   const resumePrompt = useMemo((): ResumePromptData => {
-    if (activeMission) {
+    if (activeMission || activeMissionId) {
       // Don't show resume prompt if there's an active mission
-      return { show: false, onResume: () => { }, onDismiss: () => { } };
+      return { show: false, onResume: () => {}, onDismiss: () => {} }
     }
 
-    const incompleteTour = Object.values(store.tourHistory).find(
+    const incompleteTour = Object.values(tourHistory).find(
       (t) => !t.completed && t.lastAccessed > Date.now() - 7 * 24 * 60 * 60 * 1000 // within 7 days
-    );
+    )
 
     if (incompleteTour) {
-      const mission = store.missions[incompleteTour.missionId];
+      const mission = missions[incompleteTour.missionId]
       if (mission) {
         return {
           show: true,
@@ -198,66 +234,89 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
           },
           lastStepId: incompleteTour.lastStepId,
           onResume: () => {
-            store.startMission(incompleteTour.missionId);
+            startMissionInStore(incompleteTour.missionId)
             if (incompleteTour.lastStepId) {
-              store.goToStep(incompleteTour.lastStepId);
+              goToStepInStore(incompleteTour.lastStepId)
             }
           },
-          onDismiss: () => store.recordTourEntry(incompleteTour.missionId, incompleteTour.lastStepId, true),
-        };
-      }
-    }
-
-    return { show: false, onResume: () => { }, onDismiss: () => { } };
-  }, [activeMission, store]);
-
-  const handleBubbleInteraction = useCallback((text: string) => {
-    if (disableActionInteractions) return;
-    store.addInteraction(currentStep?.id ?? '', text);
-  }, [currentStep?.id, store, disableActionInteractions]);
-
-  const handleLegacyAction = useCallback((action: StepAction) => {
-    if (!currentStep) return;
-    const config = action.config || action.data;
-    if (action.type === 'fill_field' && config) {
-      const d = config as { field: string; value: unknown };
-      const resolvedValue = resolveFillValue(d.value, fieldValues);
-      fillField(d.field, resolvedValue);
-      if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`);
-      }
-    } else if (action.type === 'click' && config) {
-      const d = config as { selector: string };
-      const el = document.querySelector(d.selector);
-      if (el) {
-        (el as HTMLElement).click();
-        if (!disableActionInteractions) {
-          store.addInteraction(currentStep.id, `Clicked: ${d.selector}`);
+          onDismiss: () =>
+            recordTourEntryInStore(incompleteTour.missionId, incompleteTour.lastStepId, true),
         }
       }
-    } else if (action.type === 'trigger_action' && config) {
-      const actions = Array.isArray(config) ? config : [config];
-      executeActionSequence(actions, currentStep.id);
-      if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`);
-      }
-    } else if (action.onClick) {
-      action.onClick();
-      if (!disableActionInteractions) {
-        store.addInteraction(currentStep.id, `Selected: ${action.label}`);
-      }
     }
-  }, [fillField, currentStep, store, executeActionSequence, fieldValues, disableActionInteractions]);
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen(prev => !prev), []);
+    return { show: false, onResume: () => {}, onDismiss: () => {} }
+  }, [
+    activeMission,
+    activeMissionId,
+    tourHistory,
+    missions,
+    startMissionInStore,
+    goToStepInStore,
+    recordTourEntryInStore,
+  ])
+
+  const handleBubbleInteraction = useCallback(
+    (text: string) => {
+      if (disableActionInteractions) return
+      addInteraction(currentStep?.id ?? '', text)
+    },
+    [currentStep?.id, addInteraction, disableActionInteractions]
+  )
+
+  const handleLegacyAction = useCallback(
+    (action: StepAction) => {
+      if (!currentStep) return
+      const config = action.config || action.data
+      if (action.type === 'fill_field' && config) {
+        const d = config as { field: string; value: unknown }
+        const resolvedValue = resolveFillValue(d.value, fieldValues)
+        fillField(d.field, resolvedValue)
+        if (!disableActionInteractions) {
+          addInteraction(currentStep.id, `Used auto-fill: ${resolvedValue}`)
+        }
+      } else if (action.type === 'click' && config) {
+        const d = config as { selector: string }
+        const el = document.querySelector(d.selector)
+        if (el) {
+          const target = el as HTMLElement
+          target.click()
+          if (!disableActionInteractions) {
+            addInteraction(currentStep.id, `Clicked: ${d.selector}`)
+          }
+        }
+      } else if (action.type === 'trigger_action' && config) {
+        const actions = Array.isArray(config) ? config : [config]
+        executeActionSequence(actions, currentStep.id)
+        if (!disableActionInteractions) {
+          addInteraction(currentStep.id, `Triggered action sequence: ${action.label}`)
+        }
+      } else if (action.onClick) {
+        action.onClick()
+        if (!disableActionInteractions) {
+          addInteraction(currentStep.id, `Selected: ${action.label}`)
+        }
+      }
+    },
+    [
+      fillField,
+      currentStep,
+      addInteraction,
+      executeActionSequence,
+      fieldValues,
+      disableActionInteractions,
+    ]
+  )
+
+  const open = useCallback(() => setIsOpen(true), [])
+  const close = useCallback(() => setIsOpen(false), [])
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), [])
   const dismiss = useCallback(() => {
-    store.dismissAllTours();
-    store.resetMission();
-  }, [store]);
+    dismissAllToursInStore()
+    resetMissionInStore()
+  }, [dismissAllToursInStore, resetMissionInStore])
 
-  const isComplete = !activeMission || !currentStep;
+  const isComplete = !activeMission || !currentStep
 
   return {
     isOpen,
@@ -268,7 +327,7 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
     activeMission,
     currentStep,
     chatHistory,
-    isTyping,
+    isTyping: effectiveIsTyping,
     fieldValues,
     fieldErrors,
     executionContext,
@@ -285,5 +344,5 @@ export function useSmartDrawer(options: UseSmartDrawerOptions = {}): SmartDrawer
       handleLegacyAction,
       disableActionInteractions,
     },
-  };
+  }
 }
