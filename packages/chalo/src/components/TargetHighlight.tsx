@@ -1,54 +1,54 @@
-import { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface TargetHighlightProps {
-  selector: string;
-  label?: string;
-  pulse?: boolean;
+  selector: string
+  label?: string
+  pulse?: boolean
 }
 
 interface Rect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
+  top: number
+  left: number
+  width: number
+  height: number
 }
 
 export function TargetHighlight({ selector, label, pulse = true }: TargetHighlightProps) {
-  const [rect, setRect] = useState<Rect | null>(null);
-  const rafRef = useRef<number>(0);
+  const [rect, setRect] = useState<Rect | null>(null)
+  const rafRef = useRef<number>(0)
 
   useEffect(() => {
     const updateRect = () => {
-      const el = document.querySelector<HTMLElement>(selector);
+      const el = document.querySelector<HTMLElement>(selector)
       if (!el) {
-        setRect(null);
-        return;
+        setRect(null)
+        return
       }
-      const r = el.getBoundingClientRect();
+      const r = el.getBoundingClientRect()
       setRect({
         top: r.top + window.scrollY,
         left: r.left + window.scrollX,
         width: r.width,
         height: r.height,
-      });
-      rafRef.current = requestAnimationFrame(updateRect);
-    };
+      })
+      rafRef.current = requestAnimationFrame(updateRect)
+    }
 
-    rafRef.current = requestAnimationFrame(updateRect);
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, true);
+    rafRef.current = requestAnimationFrame(updateRect)
+    window.addEventListener('resize', updateRect)
+    window.addEventListener('scroll', updateRect, true)
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect, true);
-    };
-  }, [selector]);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('resize', updateRect)
+      window.removeEventListener('scroll', updateRect, true)
+    }
+  }, [selector])
 
-  if (!rect) return null;
+  if (!rect) return null
 
-  const padding = 8;
+  const padding = 8
 
   return (
     <AnimatePresence>
@@ -66,7 +66,17 @@ export function TargetHighlight({ selector, label, pulse = true }: TargetHighlig
       >
         <motion.div
           className="absolute inset-0 rounded-xl border-2 border-chalo-primary"
-          animate={pulse ? { boxShadow: ['0 0 0px rgba(99,102,241,0)', '0 0 20px rgba(99,102,241,0.4)', '0 0 0px rgba(99,102,241,0)'] } : {}}
+          animate={
+            pulse
+              ? {
+                  boxShadow: [
+                    '0 0 0px rgba(99,102,241,0)',
+                    '0 0 20px rgba(99,102,241,0.4)',
+                    '0 0 0px rgba(99,102,241,0)',
+                  ],
+                }
+              : {}
+          }
           transition={{ repeat: Infinity, duration: 2 }}
         />
         {label && (
@@ -76,5 +86,5 @@ export function TargetHighlight({ selector, label, pulse = true }: TargetHighlig
         )}
       </motion.div>
     </AnimatePresence>
-  );
+  )
 }

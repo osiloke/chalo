@@ -8,25 +8,19 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es', 'cjs'],
-      fileName: (format) => `chalo.${format === 'es' ? 'mjs' : 'cjs'}`
+      fileName: (format) => `chalo.${format === 'es' ? 'mjs' : 'cjs'}`,
     },
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        'zustand',
-        'framer-motion'
-      ],
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'zustand', 'framer-motion'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
-          'zustand': 'zustand',
-          'framer-motion': 'framerMotion'
-        }
-      }
+          zustand: 'zustand',
+          'framer-motion': 'framerMotion',
+        },
+      },
     },
-    emptyOutDir: false
-  }
+    emptyOutDir: false,
+  },
 })

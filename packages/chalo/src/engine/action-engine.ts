@@ -16,7 +16,7 @@ import {
   NavigateActionConfig,
   CustomActionConfig,
   SuccessCondition,
-} from '../types';
+} from '../types'
 
 // --- VALUE RESOLVER ---
 
@@ -28,145 +28,156 @@ import {
  */
 function resolveFillValue(value: unknown, ctx: ExecutionContext): unknown {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    const src = value as FieldValueSource;
+    const src = value as FieldValueSource
     if (src.type === 'ref' && 'field' in src) {
-      return ctx.variables[src.field];
+      return ctx.variables[src.field]
     }
     if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
-      return (src.generator as () => unknown)();
+      return (src.generator as () => unknown)()
     }
   }
-  return value;
+  return value
 }
 
 // --- BUILT-IN ACTION HANDLERS ---
 
 const clickHandler: ActionHandler = async (config: ActionConfig) => {
-  const clickConfig = config as ClickActionConfig;
+  const clickConfig = config as ClickActionConfig
   // Prefer named field resolution (mirrors fill_field pattern)
   const targetSelector = clickConfig.field
     ? `[data-chalo-field="${clickConfig.field}"], #chalo-${clickConfig.field}, [name="${clickConfig.field}"], #${clickConfig.field}`
-    : clickConfig.selector;
-  if (!targetSelector) throw new Error('Click action requires either "field" or "selector".');
-  
-  const elements = document.querySelectorAll(targetSelector);
-  if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`);
-  
+    : clickConfig.selector
+  if (!targetSelector) throw new Error('Click action requires either "field" or "selector".')
+
+  const elements = document.querySelectorAll(targetSelector)
+  if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`)
+
   // Prioritize visible element if multiple matches exist (e.g. responsive design)
-  const el = Array.from(elements).find(e => (e as HTMLElement).offsetParent !== null) || elements[0];
-  
-  (el as HTMLElement).click();
-  return { clicked: targetSelector };
-};
+  const el =
+    Array.from(elements).find((e) => (e as HTMLElement).offsetParent !== null) || elements[0]
+
+  ;(el as HTMLElement).click()
+  return { clicked: targetSelector }
+}
 
 const scrollHandler: ActionHandler = async (config: ActionConfig) => {
-  const scrollConfig = config as ScrollActionConfig;
-  const { selector, behavior = 'smooth', field, block = 'center', inline = 'nearest' } = scrollConfig;
-  const targetSelector = field 
-    ? `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}` 
-    : selector;
-    
+  const scrollConfig = config as ScrollActionConfig
+  const {
+    selector,
+    behavior = 'smooth',
+    field,
+    block = 'center',
+    inline = 'nearest',
+  } = scrollConfig
+  const targetSelector = field
+    ? `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}`
+    : selector
+
   if (targetSelector) {
-    const elements = document.querySelectorAll<HTMLElement>(targetSelector);
-    if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`);
-    
+    const elements = document.querySelectorAll<HTMLElement>(targetSelector)
+    if (elements.length === 0) throw new Error(`Element not found: ${targetSelector}`)
+
     // Prioritize visible element if multiple matches exist (e.g. responsive design)
-    const el = Array.from(elements).find(e => e.offsetParent !== null) || elements[0];
-    
-    el.scrollIntoView({ behavior, block, inline });
+    const el = Array.from(elements).find((e) => e.offsetParent !== null) || elements[0]
+
+    el.scrollIntoView({ behavior, block, inline })
     // Brief highlight to show the target was found
-    el.style.transition = 'outline 0.2s';
-    el.style.outline = '3px solid rgba(99, 102, 241, 0.6)';
-    el.style.outlineOffset = '4px';
+    el.style.transition = 'outline 0.2s'
+    el.style.outline = '3px solid rgba(99, 102, 241, 0.6)'
+    el.style.outlineOffset = '4px'
     setTimeout(() => {
-      el.style.outline = 'none';
-    }, 2000);
-    return { scrolled: targetSelector };
+      el.style.outline = 'none'
+    }, 2000)
+    return { scrolled: targetSelector }
   } else {
-    window.scrollTo({ top: document.body.scrollHeight, behavior });
-    return { scrolled: 'bottom' };
+    window.scrollTo({ top: document.body.scrollHeight, behavior })
+    return { scrolled: 'bottom' }
   }
-};
+}
 
 const fillFieldHandler: ActionHandler = async (config: ActionConfig, ctx: ExecutionContext) => {
-  const { field, value } = config as FillFieldActionConfig;
+  const { field, value } = config as FillFieldActionConfig
   // Resolve dynamic values (refs, functions) before storing
-  const resolvedValue = resolveFillValue(value, ctx);
+  const resolvedValue = resolveFillValue(value, ctx)
   // Store the resolved value in execution context variables
-  ctx.variables[field] = resolvedValue;
+  ctx.variables[field] = resolvedValue
   // Also sync to the store/form so React controlled inputs stay in sync
   if (ctx.updateField) {
-    ctx.updateField(field, resolvedValue, 'valid');
+    ctx.updateField(field, resolvedValue, 'valid')
   }
   // Try to fill the actual DOM element using chalo field markers
   const el = document.querySelector<HTMLInputElement | HTMLSelectElement>(
     `[data-chalo-field="${field}"], #chalo-${field}, [name="${field}"], #${field}`
-  );
+  )
   if (el) {
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
-      || Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set;
-    nativeInputValueSetter?.call(el, resolvedValue);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
+    const nativeInputValueSetter =
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set ||
+      Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set
+    nativeInputValueSetter?.call(el, resolvedValue)
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    el.dispatchEvent(new Event('change', { bubbles: true }))
   }
-  return { field, value: resolvedValue };
-};
+  return { field, value: resolvedValue }
+}
 
 const apiCallHandler: ActionHandler = async (config: ActionConfig) => {
-  const { url, method = 'GET', headers, body } = config as ApiCallActionConfig;
+  const { url, method = 'GET', headers, body } = config as ApiCallActionConfig
   const response = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json', ...headers },
     body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!response.ok) throw new Error(`API call failed: ${response.status} ${response.statusText}`);
-  const data = await response.json();
-  return { url, status: response.status, data };
-};
+  })
+  if (!response.ok) throw new Error(`API call failed: ${response.status} ${response.statusText}`)
+  const data = await response.json()
+  return { url, status: response.status, data }
+}
 
 const waitHandler: ActionHandler = async (config: ActionConfig) => {
-  const { durationMs } = config as WaitActionConfig;
-  await new Promise((resolve) => setTimeout(resolve, durationMs));
-  return { waited: durationMs };
-};
+  const { durationMs } = config as WaitActionConfig
+  await new Promise((resolve) => setTimeout(resolve, durationMs))
+  return { waited: durationMs }
+}
 
 const conditionalHandler: ActionHandler = async (config: ActionConfig, ctx: ExecutionContext) => {
-  const { condition } = config as ConditionalActionConfig;
-  const result = evaluateCondition(condition, ctx);
-  return { conditionMet: result };
-};
+  const { condition } = config as ConditionalActionConfig
+  const result = evaluateCondition(condition, ctx)
+  return { conditionMet: result }
+}
 
 const navigateHandler: ActionHandler = async (config: ActionConfig) => {
-  const { path } = config as NavigateActionConfig;
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-  return { navigated: path };
-};
+  const { path } = config as NavigateActionConfig
+  window.history.pushState({}, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+  return { navigated: path }
+}
 
 // --- CONDITION EVALUATION ---
 
-function evaluateCondition(condition: SuccessCondition | undefined, ctx: ExecutionContext): boolean {
-  if (!condition) return true;
+function evaluateCondition(
+  condition: SuccessCondition | undefined,
+  ctx: ExecutionContext
+): boolean {
+  if (!condition) return true
   switch (condition.type) {
     case 'field_value':
-      if (!condition.field) return false;
-      return ctx.variables[condition.field] == condition.value;
+      if (!condition.field) return false
+      return ctx.variables[condition.field] == condition.value
     case 'field_touched':
-      if (!condition.field) return false;
-      return ctx.variables[`__touched_${condition.field}`] === true;
+      if (!condition.field) return false
+      return ctx.variables[`__touched_${condition.field}`] === true
     case 'element_exists': {
-      if (!condition.field) return false;
-      const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}, [name="${condition.field}"], #${condition.field}`;
-      const el = document.querySelector(selector);
-      return condition.exists === false ? !el : !!el;
+      if (!condition.field) return false
+      const selector = `[data-chalo-field="${condition.field}"], #chalo-${condition.field}, [name="${condition.field}"], #${condition.field}`
+      const el = document.querySelector(selector)
+      return condition.exists === false ? !el : !!el
     }
     case 'custom':
       if (condition.predicate) {
-        return condition.predicate(ctx.variables, ctx.variables);
+        return condition.predicate(ctx.variables, ctx.variables)
       }
-      return false;
+      return false
     default:
-      return true;
+      return true
   }
 }
 
@@ -181,150 +192,164 @@ const builtInHandlers: Record<ActionType, ActionHandler> = {
   conditional: conditionalHandler,
   navigate: navigateHandler,
   custom: async (_config) => {
-    const { handlerId } = _config as CustomActionConfig;
-    throw new Error(`No handler registered for custom action: ${handlerId}`);
+    const { handlerId } = _config as CustomActionConfig
+    throw new Error(`No handler registered for custom action: ${handlerId}`)
   },
-};
+}
 
 // --- RETRY WRAPPER ---
 
-async function withRetry<T>(fn: () => Promise<T>, retry?: RetryConfig): Promise<{ result: T; attempts: number }> {
-  const maxAttempts = retry?.maxAttempts ?? 1;
-  const delayMs = retry?.delayMs ?? 1000;
-  const backoff = retry?.backoff ?? 'fixed';
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retry?: RetryConfig
+): Promise<{ result: T; attempts: number }> {
+  const maxAttempts = retry?.maxAttempts ?? 1
+  const delayMs = retry?.delayMs ?? 1000
+  const backoff = retry?.backoff ?? 'fixed'
 
-  let lastError: Error | null = null;
+  let lastError: Error | null = null
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const result = await fn();
-      return { result, attempts: attempt };
+      const result = await fn()
+      return { result, attempts: attempt }
     } catch (e) {
-      lastError = e as Error;
+      lastError = e as Error
       if (attempt < maxAttempts) {
-        const delay = backoff === 'exponential' ? delayMs * Math.pow(2, attempt - 1) : delayMs;
-        await new Promise((r) => setTimeout(r, delay));
+        const delay = backoff === 'exponential' ? delayMs * Math.pow(2, attempt - 1) : delayMs
+        await new Promise((r) => setTimeout(r, delay))
       }
     }
   }
-  throw lastError;
+  throw lastError
 }
 
 // --- DEPENDENCY RESOLVER (topological sort) ---
 
 function resolveExecutionOrder(actions: Action[]): Action[] {
-  const actionMap = new Map(actions.map((a) => [a.id, a]));
-  const visited = new Set<string>();
-  const result: Action[] = [];
+  const actionMap = new Map(actions.map((a) => [a.id, a]))
+  const visited = new Set<string>()
+  const result: Action[] = []
 
   function visit(id: string) {
-    if (visited.has(id)) return;
-    visited.add(id);
-    const action = actionMap.get(id);
-    if (!action) return;
-    action.dependsOn?.forEach((dep) => visit(dep));
-    result.push(action);
+    if (visited.has(id)) return
+    visited.add(id)
+    const action = actionMap.get(id)
+    if (!action) return
+    action.dependsOn?.forEach((dep) => visit(dep))
+    result.push(action)
   }
 
-  actions.forEach((a) => visit(a.id));
-  return result;
+  actions.forEach((a) => visit(a.id))
+  return result
 }
 
 // --- PUBLIC ENGINE API ---
 
 export class ActionEngine {
-  private handlers = new Map<ActionType, ActionHandler>(Object.entries(builtInHandlers) as [ActionType, ActionHandler][]);
-  private abortController: AbortController | null = null;
+  private handlers = new Map<ActionType, ActionHandler>(
+    Object.entries(builtInHandlers) as [ActionType, ActionHandler][]
+  )
+  private abortController: AbortController | null = null
 
   registerHandler(type: ActionType, handler: ActionHandler): void {
-    this.handlers.set(type, handler);
+    this.handlers.set(type, handler)
   }
 
   getHandler(type: ActionType): ActionHandler | undefined {
-    return this.handlers.get(type);
+    return this.handlers.get(type)
   }
 
   async executeAction(action: Action, context: ExecutionContext): Promise<ActionResult> {
     // Check condition
     if (action.condition && !evaluateCondition(action.condition, context)) {
-      return { id: action.id, status: 'skipped', attempts: 0 };
+      return { id: action.id, status: 'skipped', attempts: 0 }
     }
 
     // Check dependencies
     if (action.dependsOn?.length) {
       const unfulfilledDeps = action.dependsOn.filter(
         (depId) => context.results[depId]?.status !== 'success'
-      );
+      )
       if (unfulfilledDeps.length > 0) {
         return {
           id: action.id,
           status: 'skipped',
           attempts: 0,
           error: `Dependencies not fulfilled: ${unfulfilledDeps.join(', ')}`,
-        };
+        }
       }
     }
 
-    const handler = this.handlers.get(action.type);
+    const handler = this.handlers.get(action.type)
     if (!handler) {
-      return { id: action.id, status: 'failed', attempts: 0, error: `No handler for action type: ${action.type}` };
+      return {
+        id: action.id,
+        status: 'failed',
+        attempts: 0,
+        error: `No handler for action type: ${action.type}`,
+      }
     }
 
-    context.currentActionId = action.id;
+    context.currentActionId = action.id
     const result: ActionResult = {
       id: action.id,
       status: 'running',
       attempts: 0,
       startedAt: Date.now(),
-    };
+    }
 
     try {
-      const config = action.config || (action as any).data || {};
+      const config = action.config || action.data || {}
       const { result: data, attempts } = await withRetry(
         () => handler(config, context),
         action.retry
-      );
-      result.status = 'success';
-      result.data = data;
-      result.attempts = attempts;
-      result.completedAt = Date.now();
+      )
+      result.status = 'success'
+      result.data = data
+      result.attempts = attempts
+      result.completedAt = Date.now()
     } catch (e) {
-      result.status = 'failed';
-      result.error = (e as Error).message;
-      result.attempts = action.retry?.maxAttempts ?? 1;
-      result.completedAt = Date.now();
+      result.status = 'failed'
+      result.error = (e as Error).message
+      result.attempts = action.retry?.maxAttempts ?? 1
+      result.completedAt = Date.now()
     }
 
-    context.results[action.id] = result;
-    context.currentActionId = null;
-    return result;
+    context.results[action.id] = result
+    context.currentActionId = null
+    return result
   }
 
-  async executeSequence(actions: Action[], context: ExecutionContext, onProgress?: (results: Record<string, ActionResult>) => void): Promise<Record<string, ActionResult>> {
-    this.abortController = new AbortController();
-    const ordered = resolveExecutionOrder(actions);
+  async executeSequence(
+    actions: Action[],
+    context: ExecutionContext,
+    onProgress?: (results: Record<string, ActionResult>) => void
+  ): Promise<Record<string, ActionResult>> {
+    this.abortController = new AbortController()
+    const ordered = resolveExecutionOrder(actions)
 
     for (const action of ordered) {
       if (this.abortController.signal.aborted) {
         // Mark remaining actions as cancelled
-        const remaining = ordered.filter((a) => !context.results[a.id]);
+        const remaining = ordered.filter((a) => !context.results[a.id])
         remaining.forEach((a) => {
-          context.results[a.id] = { id: a.id, status: 'cancelled', attempts: 0 };
-        });
-        break;
+          context.results[a.id] = { id: a.id, status: 'cancelled', attempts: 0 }
+        })
+        break
       }
 
-      await this.executeAction(action, context);
-      onProgress?.({ ...context.results });
+      await this.executeAction(action, context)
+      onProgress?.({ ...context.results })
     }
 
-    this.abortController = null;
-    return context.results;
+    this.abortController = null
+    return context.results
   }
 
   cancel(): void {
-    this.abortController?.abort();
+    this.abortController?.abort()
   }
 }
 
 // Singleton instance for store use
-export const actionEngine = new ActionEngine();
+export const actionEngine = new ActionEngine()

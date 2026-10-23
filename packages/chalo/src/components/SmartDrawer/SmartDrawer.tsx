@@ -1,59 +1,123 @@
-import { createContext, useContext, useEffect, useRef, useCallback, memo, type ReactNode, RefObject } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, CheckCircle2, ChevronLeft, ChevronRight, ListFilter, Type, RotateCcw, Loader2, AlertCircle, XCircle, Compass } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import { useSmartDrawer, type SmartDrawerState } from '../../hooks/use-smart-drawer';
-import { Bubble as BubbleType, StepAction, ActionResult, Action, FieldValueSource } from '../../types';
-import { TargetHighlight } from '../TargetHighlight';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  memo,
+  type ReactNode,
+  RefObject,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  X,
+  Send,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Type,
+  RotateCcw,
+  Loader2,
+  AlertCircle,
+  XCircle,
+  Compass,
+} from 'lucide-react'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+import { useSmartDrawer, type SmartDrawerState } from '../../hooks/use-smart-drawer'
+import {
+  Bubble as BubbleType,
+  StepAction,
+  ActionResult,
+  Action,
+  FieldValueSource,
+} from '../../types'
+import { TargetHighlight } from '../TargetHighlight'
 
 function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
 // --- VALUE RESOLVER (mirrors action-engine for bubble fill_field) ---
 
 function resolveFillValue(value: unknown, fieldValues: Record<string, unknown>): unknown {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    const src = value as FieldValueSource;
+    const src = value as FieldValueSource
     if (src.type === 'ref' && 'field' in src) {
-      return fieldValues[src.field];
+      return fieldValues[src.field]
     }
     if (src.type === 'fn' && 'generator' in src && typeof src.generator === 'function') {
-      return (src.generator as () => unknown)();
+      return (src.generator as () => unknown)()
     }
   }
-  return value;
+  return value
 }
 
 // --- CONTEXT ---
 
 interface SmartDrawerContextValue extends SmartDrawerState {
   /** Internal context marker */
-  __drawer: true;
+  __drawer: true
 }
 
-const SmartDrawerContext = createContext<SmartDrawerContextValue | null>(null);
+const SmartDrawerContext = createContext<SmartDrawerContextValue | null>(null)
 
 function useSmartDrawerContext() {
-  const ctx = useContext(SmartDrawerContext);
+  const ctx = useContext(SmartDrawerContext)
   if (!ctx) {
-    throw new Error('SmartDrawer compound components must be used within <SmartDrawer.Root>');
+    throw new Error('SmartDrawer compound components must be used within <SmartDrawer.Root>')
   }
-  return ctx;
+  return ctx
 }
 
 // --- ACTION STATUS CONFIG ---
 
 const ACTION_STATUS_CONFIG = {
-  running: { icon: Loader2, color: 'text-chalo-info', bg: 'bg-chalo-info-light', border: 'border-chalo-info-border', label: 'Executing...' },
-  success: { icon: CheckCircle2, color: 'text-chalo-success', bg: 'bg-chalo-success-light', border: 'border-chalo-success-border', label: 'Completed' },
-  failed: { icon: AlertCircle, color: 'text-chalo-error', bg: 'bg-chalo-error-light', border: 'border-chalo-error-border', label: 'Failed' },
-  cancelled: { icon: XCircle, color: 'text-chalo-text-muted', bg: 'bg-chalo-surface-subtle', border: 'border-chalo-border', label: 'Cancelled' },
-  skipped: { icon: ChevronRight, color: 'text-chalo-warning', bg: 'bg-chalo-warning-light', border: 'border-chalo-warning-border', label: 'Skipped' },
-  pending: { icon: Loader2, color: 'text-chalo-text-muted', bg: 'bg-chalo-surface-subtle', border: 'border-chalo-border', label: 'Pending' },
-} as const;
+  running: {
+    icon: Loader2,
+    color: 'text-chalo-info',
+    bg: 'bg-chalo-info-light',
+    border: 'border-chalo-info-border',
+    label: 'Executing...',
+  },
+  success: {
+    icon: CheckCircle2,
+    color: 'text-chalo-success',
+    bg: 'bg-chalo-success-light',
+    border: 'border-chalo-success-border',
+    label: 'Completed',
+  },
+  failed: {
+    icon: AlertCircle,
+    color: 'text-chalo-error',
+    bg: 'bg-chalo-error-light',
+    border: 'border-chalo-error-border',
+    label: 'Failed',
+  },
+  cancelled: {
+    icon: XCircle,
+    color: 'text-chalo-text-muted',
+    bg: 'bg-chalo-surface-subtle',
+    border: 'border-chalo-border',
+    label: 'Cancelled',
+  },
+  skipped: {
+    icon: ChevronRight,
+    color: 'text-chalo-warning',
+    bg: 'bg-chalo-warning-light',
+    border: 'border-chalo-warning-border',
+    label: 'Skipped',
+  },
+  pending: {
+    icon: Loader2,
+    color: 'text-chalo-text-muted',
+    bg: 'bg-chalo-surface-subtle',
+    border: 'border-chalo-border',
+    label: 'Pending',
+  },
+} as const
 
 // --- BUBBLE COMPONENTS (Memoized) ---
 
@@ -61,235 +125,291 @@ const MessageBubble = memo(({ content }: { content: React.ReactNode }) => (
   <div className="bg-chalo-surface text-chalo-text-secondary border border-chalo-border-subtle rounded-2xl rounded-tl-sm p-4 text-sm shadow-sm w-fit max-w-[90%]">
     {content}
   </div>
-));
-MessageBubble.displayName = 'MessageBubble';
+))
+MessageBubble.displayName = 'MessageBubble'
 
-const InputBubble = memo(({ targetField, value, onChange }: { targetField: string; value: unknown; onChange: (val: unknown) => void }) => (
-  <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
-    <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
-      <Type size={12} />
-      <span>Manual Entry: {targetField}</span>
-    </div>
-    <input
-      value={String(value || '')}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all focus:ring-2 focus:ring-chalo-primary"
-      placeholder={`Type ${targetField}...`}
-    />
-  </div>
-));
-InputBubble.displayName = 'InputBubble';
-
-const SelectBubble = memo(({ targetField, value, options, onChange }: { targetField: string; value: unknown; options?: Array<{ label: string, value: unknown }>; onChange: (val: unknown) => void }) => (
-  <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
-    <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
-      <ListFilter size={12} />
-      <span>Select for: {targetField}</span>
-    </div>
-    <div className="relative">
-      <select
+const InputBubble = memo(
+  ({
+    targetField,
+    value,
+    onChange,
+  }: {
+    targetField: string
+    value: unknown
+    onChange: (val: unknown) => void
+  }) => (
+    <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
+      <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
+        <Type size={12} />
+        <span>Manual Entry: {targetField}</span>
+      </div>
+      <input
         value={String(value || '')}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all appearance-none focus:ring-2 focus:ring-chalo-primary"
-      >
-        <option value="" disabled>Select option...</option>
-        {options?.map((opt, i) => (
-          <option key={i} value={String(opt.value)}>{opt.label}</option>
-        ))}
-      </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-chalo-text-muted">
-        <ChevronRight size={16} className="rotate-90" />
+        className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all focus:ring-2 focus:ring-chalo-primary"
+        placeholder={`Type ${targetField}...`}
+      />
+    </div>
+  )
+)
+InputBubble.displayName = 'InputBubble'
+
+const SelectBubble = memo(
+  ({
+    targetField,
+    value,
+    options,
+    onChange,
+  }: {
+    targetField: string
+    value: unknown
+    options?: Array<{ label: string; value: unknown }>
+    onChange: (val: unknown) => void
+  }) => (
+    <div className="bg-chalo-primary-light border border-chalo-primary-border rounded-2xl p-4 space-y-2 w-full max-w-[90%]">
+      <div className="flex items-center space-x-2 text-[10px] font-bold text-chalo-primary uppercase tracking-widest">
+        <ListFilter size={12} />
+        <span>Select for: {targetField}</span>
+      </div>
+      <div className="relative">
+        <select
+          value={String(value || '')}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-chalo-surface border border-chalo-border text-chalo-text rounded-xl px-4 py-2.5 text-sm outline-none shadow-sm transition-all appearance-none focus:ring-2 focus:ring-chalo-primary"
+        >
+          <option value="" disabled>
+            Select option...
+          </option>
+          {options?.map((opt, i) => (
+            <option key={i} value={String(opt.value)}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-chalo-text-muted">
+          <ChevronRight size={16} className="rotate-90" />
+        </div>
       </div>
     </div>
-  </div>
-));
-SelectBubble.displayName = 'SelectBubble';
+  )
+)
+SelectBubble.displayName = 'SelectBubble'
 
-const ActionGroupBubble = memo(({
-  actions,
-  onAction,
-  onNext,
-  onPrev
-}: {
-  actions: StepAction[];
-  onAction: (a: StepAction) => void;
-  onNext: () => void;
-  onPrev: () => void;
-}) => (
-  <div className="flex flex-col items-end space-y-2 mt-2 w-full">
-    {actions.map((action, idx) => (
-      <button
-        key={idx}
-        onClick={() => {
-          onAction(action);
-          if (action.type === 'next') onNext();
-          if (action.type === 'prev') onPrev();
-        }}
-        className="bg-chalo-primary hover:bg-chalo-primary-hover text-white text-sm font-semibold py-2.5 px-5 rounded-2xl rounded-tr-sm shadow-lg transition-all active:scale-95 flex items-center space-x-2"
-      >
-        <span>{action.label}</span>
-        {action.type === 'next' && <ChevronRight size={16} />}
-      </button>
-    ))}
-  </div>
-));
-ActionGroupBubble.displayName = 'ActionGroupBubble';
+const ActionGroupBubble = memo(
+  ({
+    actions,
+    onAction,
+    onNext,
+    onPrev,
+  }: {
+    actions: StepAction[]
+    onAction: (a: StepAction) => void
+    onNext: () => void
+    onPrev: () => void
+  }) => (
+    <div className="flex flex-col items-end space-y-2 mt-2 w-full">
+      {actions.map((action, idx) => (
+        <button
+          key={idx}
+          onClick={() => {
+            onAction(action)
+            if (action.type === 'next') onNext()
+            if (action.type === 'prev') onPrev()
+          }}
+          className="bg-chalo-primary hover:bg-chalo-primary-hover text-white text-sm font-semibold py-2.5 px-5 rounded-2xl rounded-tr-sm shadow-lg transition-all active:scale-95 flex items-center space-x-2"
+        >
+          <span>{action.label}</span>
+          {action.type === 'next' && <ChevronRight size={16} />}
+        </button>
+      ))}
+    </div>
+  )
+)
+ActionGroupBubble.displayName = 'ActionGroupBubble'
 
 const ActionStatusBubble = memo(({ action, result }: { action: Action; result: ActionResult }) => {
-  const cfg = ACTION_STATUS_CONFIG[result.status];
-  const Icon = cfg.icon;
-  const actionLabel = action.label || action.type;
+  const cfg = ACTION_STATUS_CONFIG[result.status]
+  const Icon = cfg.icon
+  const actionLabel = action.label || action.type
 
   return (
-    <div className={cn("flex flex-col space-y-1 px-4 py-2.5 rounded-xl border text-sm", cfg.bg, cfg.border)}>
+    <div
+      className={cn(
+        'flex flex-col space-y-1 px-4 py-2.5 rounded-xl border text-sm',
+        cfg.bg,
+        cfg.border
+      )}
+    >
       <div className="flex items-center space-x-3">
         <Icon size={16} className={cn(cfg.color, result.status === 'running' && 'animate-spin')} />
-        <span className={cn("font-medium", cfg.color)}>{actionLabel}</span>
+        <span className={cn('font-medium', cfg.color)}>{actionLabel}</span>
       </div>
       <div className="flex items-center space-x-2 ml-7">
         <span className="text-xs text-chalo-text-muted">{cfg.label}</span>
         {result.error && <span className="text-xs text-chalo-error">· {result.error}</span>}
-        {result.attempts > 1 && <span className="text-xs text-chalo-text-muted">· ({result.attempts} attempts)</span>}
+        {result.attempts > 1 && (
+          <span className="text-xs text-chalo-text-muted">· ({result.attempts} attempts)</span>
+        )}
       </div>
     </div>
-  );
-});
-ActionStatusBubble.displayName = 'ActionStatusBubble';
+  )
+})
+ActionStatusBubble.displayName = 'ActionStatusBubble'
 
-const BubbleRenderer = memo(({
-  bubble,
-  fieldValues,
-  onFill,
-  onNext,
-  onPrev,
-  onExecuteSequence,
-  onInteraction,
-  disableActionInteractions
-}: {
-  bubble: BubbleType;
-  fieldValues: Record<string, unknown>;
-  onFill: (f: string, v: unknown) => void;
-  onNext: () => void;
-  onPrev: () => void;
-  onExecuteSequence: (actions: Action[]) => void;
-  onInteraction: (text: string) => void;
-  disableActionInteractions?: boolean;
-}) => {
-  const handleAction = useCallback((a: StepAction) => {
-    const config = a.config || a.data;
-    if (a.type === 'fill_field' && config) {
-      const d = config as { field: string; value: unknown };
-      const resolvedValue = resolveFillValue(d.value, fieldValues);
-      onFill(d.field, resolvedValue);
-      if (!disableActionInteractions) {
-        onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`);
-      }
-    } else if (a.type === 'click' && config) {
-      const d = config as { selector?: string; field?: string };
-      const targetSelector = d.field
-        ? `[data-chalo-field="${d.field}"], #chalo-${d.field}`
-        : d.selector;
+const BubbleRenderer = memo(
+  ({
+    bubble,
+    fieldValues,
+    onFill,
+    onNext,
+    onPrev,
+    onExecuteSequence,
+    onInteraction,
+    disableActionInteractions,
+  }: {
+    bubble: BubbleType
+    fieldValues: Record<string, unknown>
+    onFill: (f: string, v: unknown) => void
+    onNext: () => void
+    onPrev: () => void
+    onExecuteSequence: (actions: Action[]) => void
+    onInteraction: (text: string) => void
+    disableActionInteractions?: boolean
+  }) => {
+    const handleAction = useCallback(
+      (a: StepAction) => {
+        const config = a.config || a.data
+        if (a.type === 'fill_field' && config) {
+          const d = config as { field: string; value: unknown }
+          const resolvedValue = resolveFillValue(d.value, fieldValues)
+          onFill(d.field, resolvedValue)
+          if (!disableActionInteractions) {
+            onInteraction(`Auto-filled ${d.field} with ${resolvedValue}`)
+          }
+        } else if (a.type === 'click' && config) {
+          const d = config as { selector?: string; field?: string }
+          const targetSelector = d.field
+            ? `[data-chalo-field="${d.field}"], #chalo-${d.field}`
+            : d.selector
 
-      onExecuteSequence([
-        {
-          id: `bubble-click-${Date.now()}`,
-          type: 'click',
-          config: d,
-          label: a.label,
-        } as Action,
-      ]);
+          onExecuteSequence([
+            {
+              id: `bubble-click-${Date.now()}`,
+              type: 'click',
+              config: d,
+              label: a.label,
+            } as Action,
+          ])
 
-      if (!disableActionInteractions && targetSelector) {
-        onInteraction(`Clicked: ${targetSelector}`);
-      }
-    } else if (a.type === 'trigger_action' && config) {
-      const actions = Array.isArray(config) ? config : [config];
-      onExecuteSequence(actions as Action[]);
-      if (!disableActionInteractions) {
-        onInteraction(`Triggered action sequence: ${a.label}`);
-      }
-    } else if (a.onClick) {
-      a.onClick();
-      if (!disableActionInteractions) {
-        onInteraction(`Performed action: ${a.label}`);
-      }
-    } else {
-      if (!disableActionInteractions) {
-        onInteraction(`Clicked: ${a.label}`);
-      }
+          if (!disableActionInteractions && targetSelector) {
+            onInteraction(`Clicked: ${targetSelector}`)
+          }
+        } else if (a.type === 'trigger_action' && config) {
+          const actions = Array.isArray(config) ? config : [config]
+          onExecuteSequence(actions as Action[])
+          if (!disableActionInteractions) {
+            onInteraction(`Triggered action sequence: ${a.label}`)
+          }
+        } else if (a.onClick) {
+          a.onClick()
+          if (!disableActionInteractions) {
+            onInteraction(`Performed action: ${a.label}`)
+          }
+        } else {
+          if (!disableActionInteractions) {
+            onInteraction(`Clicked: ${a.label}`)
+          }
+        }
+      },
+      [onFill, onExecuteSequence, onInteraction, fieldValues, disableActionInteractions]
+    )
+
+    const handleInputChange = useCallback(
+      (v: unknown) => {
+        onFill(bubble.targetField!, v)
+      },
+      [bubble.targetField, onFill]
+    )
+
+    const handleSelectChange = useCallback(
+      (v: unknown) => {
+        onFill(bubble.targetField!, v)
+      },
+      [bubble.targetField, onFill]
+    )
+
+    switch (bubble.type) {
+      case 'message':
+        return <MessageBubble content={bubble.content} />
+      case 'input':
+        if (!bubble.targetField) return null
+        return (
+          <InputBubble
+            targetField={bubble.targetField}
+            value={fieldValues[bubble.targetField]}
+            onChange={handleInputChange}
+          />
+        )
+      case 'select':
+        if (!bubble.targetField) return null
+        return (
+          <SelectBubble
+            targetField={bubble.targetField}
+            options={bubble.options}
+            value={fieldValues[bubble.targetField]}
+            onChange={handleSelectChange}
+          />
+        )
+      case 'action-group':
+        return (
+          <ActionGroupBubble
+            actions={bubble.actions || []}
+            onNext={onNext}
+            onPrev={onPrev}
+            onAction={handleAction}
+          />
+        )
+      default:
+        return null
     }
-  }, [onFill, onExecuteSequence, onInteraction, fieldValues, disableActionInteractions]);
-
-  const handleInputChange = useCallback((v: unknown) => {
-    onFill(bubble.targetField!, v);
-  }, [bubble.targetField, onFill]);
-
-  const handleSelectChange = useCallback((v: unknown) => {
-    onFill(bubble.targetField!, v);
-  }, [bubble.targetField, onFill]);
-
-  switch (bubble.type) {
-    case 'message':
-      return <MessageBubble content={bubble.content} />;
-    case 'input':
-      if (!bubble.targetField) return null;
-      return (
-        <InputBubble
-          targetField={bubble.targetField}
-          value={fieldValues[bubble.targetField]}
-          onChange={handleInputChange}
-        />
-      );
-    case 'select':
-      if (!bubble.targetField) return null;
-      return (
-        <SelectBubble
-          targetField={bubble.targetField}
-          options={bubble.options}
-          value={fieldValues[bubble.targetField]}
-          onChange={handleSelectChange}
-        />
-      );
-    case 'action-group':
-      return (
-        <ActionGroupBubble
-          actions={bubble.actions || []}
-          onNext={onNext}
-          onPrev={onPrev}
-          onAction={handleAction}
-        />
-      );
-    default:
-      return null;
   }
-});
-BubbleRenderer.displayName = 'BubbleRenderer';
+)
+BubbleRenderer.displayName = 'BubbleRenderer'
 
 const TypingIndicator = memo(() => {
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const id = 'chalo-typing-keyframes';
-    if (document.getElementById(id)) return;
-    const style = document.createElement('style');
-    style.id = id;
+    if (typeof document === 'undefined') return
+    const id = 'chalo-typing-keyframes'
+    if (document.getElementById(id)) return
+    const style = document.createElement('style')
+    style.id = id
     style.textContent = `
       @keyframes typingBounce {
         0%, 60%, 100% { transform: translateY(0); }
         30% { transform: translateY(-3px); }
       }
-    `;
-    document.head.appendChild(style);
-  }, []);
+    `
+    document.head.appendChild(style)
+  }, [])
 
   return (
     <div className="bg-chalo-surface border border-chalo-border-subtle rounded-2xl rounded-tl-sm p-4 px-5 shadow-sm flex items-center space-x-1">
-      <div className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full" style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '0ms' }} />
-      <div className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full" style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '200ms' }} />
-      <div className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full" style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '400ms' }} />
+      <div
+        className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
+        style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '0ms' }}
+      />
+      <div
+        className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
+        style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '200ms' }}
+      />
+      <div
+        className="w-1.5 h-1.5 bg-chalo-text-muted rounded-full"
+        style={{ animation: 'typingBounce 0.6s ease-in-out infinite', animationDelay: '400ms' }}
+      />
     </div>
-  );
-});
-TypingIndicator.displayName = 'TypingIndicator';
+  )
+})
+TypingIndicator.displayName = 'TypingIndicator'
 
 // =============================
 // COMPOUND COMPONENTS
@@ -298,22 +418,22 @@ TypingIndicator.displayName = 'TypingIndicator';
 // --- ROOT ---
 
 export interface SmartDrawerRootProps {
-  children: ReactNode;
+  children: ReactNode
   /** Custom className for the drawer panel */
-  className?: string;
+  className?: string
   /** Custom className for the placeholder (pushes content in flex layout) */
-  placeholderClassName?: string;
+  placeholderClassName?: string
   /** Layout mode: 'push' renders a placeholder in a flex container, 'overlay' floats on top (default: 'push') */
-  variant?: 'push' | 'overlay';
+  variant?: 'push' | 'overlay'
   /** Whether to render drawer panel inside a portal to escape stacking contexts (default: true) */
-  portal?: boolean;
+  portal?: boolean
   /** Custom container for the portal (default: document.body) */
-  portalContainer?: HTMLElement | null;
+  portalContainer?: HTMLElement | null
   /** Custom className for overlay backdrop (when variant="overlay") */
-  backdropClassName?: string;
+  backdropClassName?: string
   /** Whether to show backdrop in overlay mode (default: true) */
-  showBackdrop?: boolean;
-  ref?: RefObject<HTMLDivElement | null>;
+  showBackdrop?: boolean
+  ref?: RefObject<HTMLDivElement | null>
 }
 
 export function SmartDrawerRoot({
@@ -325,10 +445,11 @@ export function SmartDrawerRoot({
   portalContainer,
   backdropClassName,
   showBackdrop = true,
-  ref
+  ref,
 }: SmartDrawerRootProps) {
-  const drawerState = useSmartDrawer();
-  const targetPortalContainer = portalContainer ?? (typeof document !== 'undefined' ? document.body : null);
+  const drawerState = useSmartDrawer()
+  const targetPortalContainer =
+    portalContainer ?? (typeof document !== 'undefined' ? document.body : null)
 
   const placeholder = (
     <AnimatePresence>
@@ -343,7 +464,7 @@ export function SmartDrawerRoot({
         />
       )}
     </AnimatePresence>
-  );
+  )
 
   const drawerElement = (
     <SmartDrawerContext.Provider value={{ ...drawerState, __drawer: true }}>
@@ -388,43 +509,50 @@ export function SmartDrawerRoot({
         />
       )}
     </SmartDrawerContext.Provider>
-  );
+  )
 
   return (
     <>
       {placeholder}
-      {portal && targetPortalContainer ? createPortal(drawerElement, targetPortalContainer) : drawerElement}
+      {portal && targetPortalContainer
+        ? createPortal(drawerElement, targetPortalContainer)
+        : drawerElement}
     </>
-  );
+  )
 }
 
 // --- HEADER ---
 
 export interface SmartDrawerHeaderProps {
   /** Override mission title (sub-header) */
-  title?: string;
+  title?: string
   /** Main header title (e.g. "Chalo Guide") */
-  headerTitle?: string;
+  headerTitle?: string
   /** Custom icon for the header */
-  icon?: React.ElementType;
+  icon?: React.ElementType
   /** Custom className */
-  className?: string;
+  className?: string
   /** Custom dismiss handler */
-  onDismiss?: () => void;
+  onDismiss?: () => void
 }
 
 export function SmartDrawerHeader({
   title,
-  headerTitle = "Chalo Guide",
+  headerTitle = 'Chalo Guide',
   icon: Icon = Compass,
   className,
-  onDismiss
+  onDismiss,
 }: SmartDrawerHeaderProps) {
-  const { activeMission, dismiss } = useSmartDrawerContext();
-  const handleDismiss = onDismiss || dismiss;
+  const { activeMission, dismiss } = useSmartDrawerContext()
+  const handleDismiss = onDismiss || dismiss
 
   return (
-    <div className={cn("p-5 border-b border-chalo-border flex items-center justify-between bg-chalo-surface-subtle/50 backdrop-blur-sm z-10 shrink-0", className)}>
+    <div
+      className={cn(
+        'p-5 border-b border-chalo-border flex items-center justify-between bg-chalo-surface-subtle/50 backdrop-blur-sm z-10 shrink-0',
+        className
+      )}
+    >
       <div className="flex items-center space-x-3 overflow-hidden">
         <div className="relative shrink-0">
           <div className="p-2 bg-chalo-primary rounded-xl text-white shadow-lg shadow-chalo-primary/30">
@@ -433,7 +561,9 @@ export function SmartDrawerHeader({
           <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-chalo-success border-2 border-chalo-surface rounded-full" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-chalo-text leading-tight truncate">{headerTitle}</h2>
+          <h2 className="text-sm font-bold text-chalo-text leading-tight truncate">
+            {headerTitle}
+          </h2>
           <p className="text-[11px] font-semibold text-chalo-text-secondary truncate">
             {title || activeMission?.title}
           </p>
@@ -446,58 +576,72 @@ export function SmartDrawerHeader({
         <X size={18} />
       </button>
     </div>
-  );
+  )
 }
 
 // --- BODY ---
 
 export interface SmartDrawerBodyProps {
   /** Custom className for scroll container */
-  className?: string;
+  className?: string
   /** Custom bubble renderer (overrides default) */
-  renderBubble?: (bubble: BubbleType) => ReactNode;
+  renderBubble?: (bubble: BubbleType) => ReactNode
   /** Custom empty state when no messages */
-  emptyState?: ReactNode;
+  emptyState?: ReactNode
 }
 
 export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDrawerBodyProps) {
-  const { chatHistory, isTyping, currentStep, displayedStepId, fieldValues, executionContext, actions } = useSmartDrawerContext();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    chatHistory,
+    isTyping,
+    currentStep,
+    displayedStepId,
+    fieldValues,
+    executionContext,
+    actions,
+  } = useSmartDrawerContext()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auto-scroll
   useEffect(() => {
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
     scrollTimeoutRef.current = setTimeout(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTo({
           top: scrollRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
+          behavior: 'smooth',
+        })
       }
-    }, 100);
+    }, 100)
     return () => {
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, [chatHistory, isTyping]);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
+    }
+  }, [chatHistory, isTyping])
 
-  const renderDefaultBubble = useCallback((bubble: BubbleType) => (
-    <BubbleRenderer
-      bubble={bubble}
-      fieldValues={fieldValues || {}}
-      onFill={actions.fillField}
-      onNext={actions.nextStep}
-      onPrev={actions.prevStep}
-      onExecuteSequence={actions.executeActionSequence}
-      onInteraction={actions.handleBubbleInteraction}
-      disableActionInteractions={actions.disableActionInteractions}
-    />
-  ), [fieldValues, actions]);
+  const renderDefaultBubble = useCallback(
+    (bubble: BubbleType) => (
+      <BubbleRenderer
+        bubble={bubble}
+        fieldValues={fieldValues || {}}
+        onFill={actions.fillField}
+        onNext={actions.nextStep}
+        onPrev={actions.prevStep}
+        onExecuteSequence={actions.executeActionSequence}
+        onInteraction={actions.handleBubbleInteraction}
+        disableActionInteractions={actions.disableActionInteractions}
+      />
+    ),
+    [fieldValues, actions]
+  )
 
-  const bubbleRenderer = renderBubble || renderDefaultBubble;
+  const bubbleRenderer = renderBubble || renderDefaultBubble
 
   return (
-    <div ref={scrollRef} className={cn("flex-1 overflow-y-auto p-5 space-y-6 scroll-smooth min-h-0", className)}>
+    <div
+      ref={scrollRef}
+      className={cn('flex-1 overflow-y-auto p-5 space-y-6 scroll-smooth min-h-0', className)}
+    >
       <AnimatePresence initial={false}>
         {chatHistory.map((msg) => (
           <motion.div
@@ -505,14 +649,16 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
             layout
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}
+            className={cn('flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start')}
           >
-            <div className={cn(
-              "max-w-[85%] rounded-2xl p-4 text-sm shadow-sm will-change-transform",
-              msg.role === 'user'
-                ? "bg-chalo-text text-chalo-text-inverse rounded-tr-sm"
-                : "bg-chalo-surface text-chalo-text-secondary border border-chalo-border-subtle rounded-tl-sm"
-            )}>
+            <div
+              className={cn(
+                'max-w-[85%] rounded-2xl p-4 text-sm shadow-sm will-change-transform',
+                msg.role === 'user'
+                  ? 'bg-chalo-text text-chalo-text-inverse rounded-tr-sm'
+                  : 'bg-chalo-surface text-chalo-text-secondary border border-chalo-border-subtle rounded-tl-sm'
+              )}
+            >
               {msg.content}
             </div>
           </motion.div>
@@ -534,7 +680,13 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
           {/* Render explicitly defined bubbles if present */}
           {currentStep.bubbles?.map((bubble) => (
-            <div key={bubble.id} className={cn("flex w-full", bubble.type === 'action-group' ? "justify-end" : "justify-start")}>
+            <div
+              key={bubble.id}
+              className={cn(
+                'flex w-full',
+                bubble.type === 'action-group' ? 'justify-end' : 'justify-start'
+              )}
+            >
               {bubbleRenderer(bubble)}
             </div>
           ))}
@@ -550,67 +702,82 @@ export function SmartDrawerBody({ className, renderBubble, emptyState }: SmartDr
           )}
 
           {/* Action execution status */}
-          {(executionContext.currentSequence || currentStep?.actionSequence) && Object.keys(executionContext.results).length > 0 && (
-            <div className="space-y-2">
-              {(executionContext.currentSequence || currentStep!.actionSequence!).map((action) => {
-                const result = executionContext.results[action.id];
-                if (!result) return null;
-                return (
-                  <div key={action.id} className="flex justify-start w-full">
-                    <ActionStatusBubble action={action} result={result} />
-                  </div>
-                );
-              })}
-              {executionContext.isRunning && (
-                <button
-                  onClick={actions.cancelExecution}
-                  className="flex items-center space-x-1 text-xs text-chalo-error hover:text-chalo-error/80 font-medium ml-2 mt-1"
-                >
-                  <XCircle size={12} />
-                  <span>Cancel execution</span>
-                </button>
-              )}
-            </div>
-          )}
+          {(executionContext.currentSequence || currentStep?.actionSequence) &&
+            Object.keys(executionContext.results).length > 0 && (
+              <div className="space-y-2">
+                {(executionContext.currentSequence || currentStep!.actionSequence!).map(
+                  (action) => {
+                    const result = executionContext.results[action.id]
+                    if (!result) return null
+                    return (
+                      <div key={action.id} className="flex justify-start w-full">
+                        <ActionStatusBubble action={action} result={result} />
+                      </div>
+                    )
+                  }
+                )}
+                {executionContext.isRunning && (
+                  <button
+                    onClick={actions.cancelExecution}
+                    className="flex items-center space-x-1 text-xs text-chalo-error hover:text-chalo-error/80 font-medium ml-2 mt-1"
+                  >
+                    <XCircle size={12} />
+                    <span>Cancel execution</span>
+                  </button>
+                )}
+              </div>
+            )}
 
           {/* Empty state */}
-          {!currentStep.bubbles && !currentStep.actions && (!currentStep.actionSequence || Object.keys(executionContext.results).length === 0) && emptyState}
+          {!currentStep.bubbles &&
+            !currentStep.actions &&
+            (!currentStep.actionSequence || Object.keys(executionContext.results).length === 0) &&
+            emptyState}
         </motion.div>
       )}
     </div>
-  );
+  )
 }
 
 // --- FOOTER ---
 
 export interface SmartDrawerFooterProps {
   /** Custom className */
-  className?: string;
+  className?: string
   /** Override prev button */
-  renderPrevButton?: () => ReactNode;
+  renderPrevButton?: () => ReactNode
   /** Override next button */
-  renderNextButton?: () => ReactNode;
+  renderNextButton?: () => ReactNode
   /** Custom status text */
-  statusText?: string;
+  statusText?: string
 }
 
-export function SmartDrawerFooter({ className, renderPrevButton, renderNextButton, statusText }: SmartDrawerFooterProps) {
-  const { activeMission, currentStep, fieldErrors, executionContext, actions } = useSmartDrawerContext();
+export function SmartDrawerFooter({
+  className,
+  renderPrevButton,
+  renderNextButton,
+  statusText,
+}: SmartDrawerFooterProps) {
+  const { activeMission, currentStep, fieldErrors, executionContext, actions } =
+    useSmartDrawerContext()
 
-  if (!activeMission || !currentStep) return null;
+  if (!activeMission || !currentStep) return null
 
   const defaultStatusText = currentStep.targetField
     ? `Focusing on ${currentStep.targetField}...`
-    : "Reading...";
+    : 'Reading...'
 
-  const isPrevDisabled = activeMission.steps.indexOf(currentStep) === 0 || executionContext.isRunning;
-  const isLastStep = activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1;
+  const isPrevDisabled =
+    activeMission.steps.indexOf(currentStep) === 0 || executionContext.isRunning
+  const isLastStep = activeMission.steps.indexOf(currentStep) === activeMission.steps.length - 1
   const isNextDisabled =
-    Boolean(currentStep.targetField && !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]) ||
-    Boolean(executionContext.isRunning);
+    Boolean(
+      currentStep.targetField &&
+      !!(fieldErrors as Record<string, unknown>)?.[currentStep.targetField]
+    ) || Boolean(executionContext.isRunning)
 
   return (
-    <div className={cn("p-4 bg-chalo-surface border-t border-chalo-border shrink-0", className)}>
+    <div className={cn('p-4 bg-chalo-surface border-t border-chalo-border shrink-0', className)}>
       <div className="flex items-center justify-between space-x-2">
         {renderPrevButton ? (
           renderPrevButton()
@@ -636,31 +803,33 @@ export function SmartDrawerFooter({ className, renderPrevButton, renderNextButto
           <button
             onClick={actions.nextStep}
             disabled={isNextDisabled}
-            className={cn("p-3 bg-chalo-primary hover:bg-chalo-primary-hover text-chalo-text-inverse rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50")}
+            className={cn(
+              'p-3 bg-chalo-primary hover:bg-chalo-primary-hover text-chalo-text-inverse rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50'
+            )}
           >
             {isLastStep ? <CheckCircle2 size={20} /> : <Send size={20} />}
           </button>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // --- RESUME PROMPT ---
 
 export interface SmartDrawerResumePromptProps {
   /** Custom className */
-  className?: string;
+  className?: string
   /** Custom className for the placeholder */
-  placeholderClassName?: string;
+  placeholderClassName?: string
   /** Layout mode: 'push' renders a placeholder in a flex container, 'overlay' floats on top (default: 'push') */
-  variant?: 'push' | 'overlay';
+  variant?: 'push' | 'overlay'
   /** Whether to render in a portal (default: true) */
-  portal?: boolean;
+  portal?: boolean
   /** Portal container (default: document.body) */
-  portalContainer?: HTMLElement | null;
+  portalContainer?: HTMLElement | null
   /** Custom resume prompt data (overrides context/hook data) */
-  resumePrompt?: SmartDrawerState['resumePrompt'];
+  resumePrompt?: SmartDrawerState['resumePrompt']
 }
 
 export function SmartDrawerResumePrompt({
@@ -669,13 +838,14 @@ export function SmartDrawerResumePrompt({
   variant = 'push',
   portal = true,
   portalContainer,
-  resumePrompt: customResumePrompt
+  resumePrompt: customResumePrompt,
 }: SmartDrawerResumePromptProps) {
-  const drawerState = useSmartDrawer();
-  const prompt = customResumePrompt || drawerState.resumePrompt;
-  const targetPortalContainer = portalContainer ?? (typeof document !== 'undefined' ? document.body : null);
+  const drawerState = useSmartDrawer()
+  const prompt = customResumePrompt || drawerState.resumePrompt
+  const targetPortalContainer =
+    portalContainer ?? (typeof document !== 'undefined' ? document.body : null)
 
-  if (!prompt.show || !prompt.mission) return null;
+  if (!prompt.show || !prompt.mission) return null
 
   const placeholder = (
     <AnimatePresence>
@@ -690,14 +860,17 @@ export function SmartDrawerResumePrompt({
         />
       )}
     </AnimatePresence>
-  );
+  )
 
   const promptContent = (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      className={cn("fixed top-0 right-0 h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000", className)}
+      className={cn(
+        'fixed top-0 right-0 h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
+        className
+      )}
       data-chalo-drawer="true"
     >
       <div className="p-6 flex flex-col items-center text-center space-y-4">
@@ -706,7 +879,8 @@ export function SmartDrawerResumePrompt({
         </div>
         <h3 className="text-lg font-bold text-chalo-text">Resume Tour?</h3>
         <p className="text-sm text-chalo-text-secondary">
-          You were taking the <strong>{prompt.mission.title}</strong> tour. Would you like to continue where you left off?
+          You were taking the <strong>{prompt.mission.title}</strong> tour. Would you like to
+          continue where you left off?
         </p>
         <div className="flex flex-col w-full space-y-2 pt-2">
           <button
@@ -725,39 +899,51 @@ export function SmartDrawerResumePrompt({
         </div>
       </div>
     </motion.div>
-  );
+  )
 
   return (
     <>
       {placeholder}
-      {portal && targetPortalContainer ? createPortal(promptContent, targetPortalContainer) : promptContent}
+      {portal && targetPortalContainer
+        ? createPortal(promptContent, targetPortalContainer)
+        : promptContent}
     </>
-  );
+  )
 }
 
 // --- TRIGGER ---
 
 export interface SmartDrawerTriggerProps {
-  children: ReactNode | ((state: { isOpen: boolean; toggle: () => void; open: () => void; close: () => void }) => ReactNode);
+  children:
+    | ReactNode
+    | ((state: {
+        isOpen: boolean
+        toggle: () => void
+        open: () => void
+        close: () => void
+      }) => ReactNode)
   /** Custom className for button (if children is not a function) */
-  className?: string;
+  className?: string
 }
 
 export function SmartDrawerTrigger({ children, className }: SmartDrawerTriggerProps) {
-  const { isOpen, toggle, open, close } = useSmartDrawerContext();
+  const { isOpen, toggle, open, close } = useSmartDrawerContext()
 
   if (typeof children === 'function') {
-    return <>{children({ isOpen, toggle, open, close })}</>;
+    return <>{children({ isOpen, toggle, open, close })}</>
   }
 
   return (
     <button
       onClick={toggle}
-      className={cn("px-4 py-2 rounded-xl bg-chalo-primary text-chalo-text-inverse font-semibold hover:bg-chalo-primary-hover shadow-md transition-all", className)}
+      className={cn(
+        'px-4 py-2 rounded-xl bg-chalo-primary text-chalo-text-inverse font-semibold hover:bg-chalo-primary-hover shadow-md transition-all',
+        className
+      )}
     >
       {children}
     </button>
-  );
+  )
 }
 
 // =============================
@@ -766,25 +952,25 @@ export function SmartDrawerTrigger({ children, className }: SmartDrawerTriggerPr
 
 export interface SmartDrawerProps {
   /** Custom className for drawer panel */
-  className?: string;
+  className?: string
   /** Main header title */
-  headerTitle?: string;
+  headerTitle?: string
   /** Mission title (sub-header) */
-  title?: string;
+  title?: string
   /** Header icon */
-  icon?: React.ElementType;
+  icon?: React.ElementType
   /** Layout mode: 'push' renders placeholder in a flex container, 'overlay' floats on top (default: 'push') */
-  variant?: 'push' | 'overlay';
+  variant?: 'push' | 'overlay'
   /** Whether to render using React Portal (default: true) */
-  portal?: boolean;
+  portal?: boolean
   /** Custom portal container (default: document.body) */
-  portalContainer?: HTMLElement | null;
+  portalContainer?: HTMLElement | null
   /** Custom backdrop className for overlay mode */
-  backdropClassName?: string;
+  backdropClassName?: string
   /** Whether to show backdrop in overlay mode (default: true) */
-  showBackdrop?: boolean;
+  showBackdrop?: boolean
   /** Ref */
-  ref?: RefObject<HTMLDivElement | null>;
+  ref?: RefObject<HTMLDivElement | null>
 }
 
 /**
@@ -810,7 +996,7 @@ export function SmartDrawer({
   portalContainer,
   backdropClassName,
   showBackdrop,
-  ref
+  ref,
 }: SmartDrawerProps) {
   return (
     <>
@@ -823,11 +1009,7 @@ export function SmartDrawer({
         backdropClassName={backdropClassName}
         showBackdrop={showBackdrop}
       >
-        <SmartDrawerHeader
-          headerTitle={headerTitle}
-          title={title}
-          icon={icon}
-        />
+        <SmartDrawerHeader headerTitle={headerTitle} title={title} icon={icon} />
         <SmartDrawerBody />
         <SmartDrawerFooter />
       </SmartDrawerRoot>
@@ -837,13 +1019,13 @@ export function SmartDrawer({
         portalContainer={portalContainer}
       />
     </>
-  );
+  )
 }
 
 // Attach compound components to SmartDrawer for namespaced access
-SmartDrawer.Root = SmartDrawerRoot;
-SmartDrawer.Header = SmartDrawerHeader;
-SmartDrawer.Body = SmartDrawerBody;
-SmartDrawer.Footer = SmartDrawerFooter;
-SmartDrawer.ResumePrompt = SmartDrawerResumePrompt;
-SmartDrawer.Trigger = SmartDrawerTrigger;
+SmartDrawer.Root = SmartDrawerRoot
+SmartDrawer.Header = SmartDrawerHeader
+SmartDrawer.Body = SmartDrawerBody
+SmartDrawer.Footer = SmartDrawerFooter
+SmartDrawer.ResumePrompt = SmartDrawerResumePrompt
+SmartDrawer.Trigger = SmartDrawerTrigger
