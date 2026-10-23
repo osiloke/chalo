@@ -1,3 +1,19 @@
+# [2.7.0](https://github.com/osiloke/chalo/compare/v2.6.0...v2.7.0) (2026-10-23)
+
+
+### Bug Fixes
+
+* **drawer:** eliminate step transition flash and mission switching race conditions ([b1f0bce](https://github.com/osiloke/chalo/commit/b1f0bce1c8100e5fa2b0e40baf47fa4a941de4ba))
+* **lint:** resolve eslint rules, hook dependencies, and prettier formatting ([a875e72](https://github.com/osiloke/chalo/commit/a875e729464987958da7b02ab0e80b53f63dc68a))
+* **no-release:** set vite base path for github pages ([0c02532](https://github.com/osiloke/chalo/commit/0c0253235211ef51cadf16a422c6c35bf5cdb117))
+* **reload:** check persisted executedSteps on page reload ([4fefb46](https://github.com/osiloke/chalo/commit/4fefb4646c0efc58d913df1104da1eb8a05b5e36))
+* update action engine demo targets and fix dependency cascading ([ba50f5d](https://github.com/osiloke/chalo/commit/ba50f5d5f50d4bac8f03adb7225aa79a18eb94c9))
+
+
+### Features
+
+* add portal and overlay variant to SmartDrawer and convert demo to multi-page app ([eeaafaf](https://github.com/osiloke/chalo/commit/eeaafaf955f3e053e252eb352658c2073674cb40))
+
 # [2.6.0](https://github.com/osiloke/chalo/compare/v2.5.1...v2.6.0) (2026-04-26)
 
 
