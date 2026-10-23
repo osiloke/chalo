@@ -54,5 +54,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build chalo library
+        run: pnpm build:chalo
+
       - name: Build demo
         run: pnpm build:demo
