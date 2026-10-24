@@ -1,3 +1,10 @@
+## [2.7.3](https://github.com/osiloke/chalo/compare/v2.7.2...v2.7.3) (2026-10-24)
+
+
+### Bug Fixes
+
+* **ci:** configure npm auth across all directories and setup-node for release ([90a3b07](https://github.com/osiloke/chalo/commit/90a3b07224e46351c02231dbe53ee60301e94b39))
+
 ## [2.7.2](https://github.com/osiloke/chalo/compare/v2.7.1...v2.7.2) (2026-10-24)
 
 
