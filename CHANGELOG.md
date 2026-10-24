@@ -1,3 +1,10 @@
+## [2.7.2](https://github.com/osiloke/chalo/compare/v2.7.1...v2.7.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **mobile:** resolve viewport height, safe-area bottom inset, and mobile responsiveness ([234529a](https://github.com/osiloke/chalo/commit/234529a9a405cf11bc3ac7387eb3678c3fe7b6ac))
+
 ## [2.7.1](https://github.com/osiloke/chalo/compare/v2.7.0...v2.7.1) (2026-10-23)
 
 
