@@ -11,8 +11,8 @@ export const Layout: FC = () => {
   };
 
   return (
-    <div className="min-h-screen premium-gradient flex overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
+    <div className="min-h-screen min-h-[100dvh] premium-gradient flex overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+      <div className="flex-1 flex flex-col min-w-0 h-screen h-[100dvh] overflow-y-auto relative pb-[env(safe-area-inset-bottom,0px)]">
         <Navbar drawerVariant={drawerVariant} onToggleDrawerVariant={toggleDrawerVariant} />
         <main className="flex-1">
           <Outlet context={{ drawerVariant, setDrawerVariant }} />

@@ -63,12 +63,12 @@ export function PortalDialog({ isOpen, onClose, title, children }: PortalDialogP
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed inset-0 z-9999 flex items-center justify-center pointer-events-none"
+          className="fixed inset-0 z-9999 flex items-center justify-center pointer-events-none p-3 sm:p-4"
         >
-          <div className="pointer-events-auto w-full max-w-md mx-4">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="pointer-events-auto w-full max-w-md max-h-[90dvh] flex flex-col">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90dvh]">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
                 <button
                   onClick={onClose}
@@ -79,7 +79,7 @@ export function PortalDialog({ isOpen, onClose, title, children }: PortalDialogP
               </div>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6 overflow-y-auto">
                 {children}
               </div>
             </div>

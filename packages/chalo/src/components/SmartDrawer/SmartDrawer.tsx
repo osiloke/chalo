@@ -459,7 +459,7 @@ export function SmartDrawerRoot({
           animate={{ width: 400 }}
           exit={{ width: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className={cn('h-screen w-100 shrink-0', placeholderClassName)}
+          className={cn('h-screen h-[100dvh] w-100 shrink-0 hidden sm:block', placeholderClassName)}
           data-chalo-drawer-placeholder="true"
         />
       )}
@@ -468,15 +468,19 @@ export function SmartDrawerRoot({
 
   const drawerElement = (
     <SmartDrawerContext.Provider value={{ ...drawerState, __drawer: true }}>
-      {/* Optional Backdrop for overlay mode */}
+      {/* Backdrop: Always show on mobile when open so push mode acts as overlay without breaking screen width; on desktop only show for overlay variant */}
       <AnimatePresence>
-        {variant === 'overlay' && showBackdrop && drawerState.isOpen && (
+        {drawerState.isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={drawerState.dismiss}
-            className={cn('fixed inset-0 bg-black/40 backdrop-blur-xs z-9990', backdropClassName)}
+            className={cn(
+              'fixed inset-0 bg-black/40 backdrop-blur-xs z-9990',
+              variant === 'push' ? 'sm:hidden' : !showBackdrop ? 'hidden' : '',
+              backdropClassName
+            )}
             data-chalo-drawer-backdrop="true"
           />
         )}
@@ -486,12 +490,12 @@ export function SmartDrawerRoot({
         {drawerState.isOpen && (
           <motion.aside
             ref={ref}
-            initial={{ x: 400, opacity: 0 }}
+            initial={{ x: '100%', opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 400, opacity: 0 }}
+            exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              'fixed top-0 right-0 h-screen w-100 overflow-hidden bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
+              'fixed top-0 right-0 h-screen h-[100dvh] max-h-[100dvh] w-full sm:w-[400px] max-w-full overflow-hidden bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
               className
             )}
             data-chalo-drawer="true"
@@ -549,7 +553,7 @@ export function SmartDrawerHeader({
   return (
     <div
       className={cn(
-        'p-5 border-b border-chalo-border flex items-center justify-between bg-chalo-surface-subtle/50 backdrop-blur-sm z-10 shrink-0',
+        'p-4 sm:p-5 pt-[max(1rem,calc(1rem+env(safe-area-inset-top,0px)))] border-b border-chalo-border flex items-center justify-between bg-chalo-surface-subtle/50 backdrop-blur-sm z-10 shrink-0',
         className
       )}
     >
@@ -777,7 +781,12 @@ export function SmartDrawerFooter({
     ) || Boolean(executionContext.isRunning)
 
   return (
-    <div className={cn('p-4 bg-chalo-surface border-t border-chalo-border shrink-0', className)}>
+    <div
+      className={cn(
+        'p-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom,0px)))] bg-chalo-surface border-t border-chalo-border shrink-0',
+        className
+      )}
+    >
       <div className="flex items-center justify-between space-x-2">
         {renderPrevButton ? (
           renderPrevButton()
@@ -855,7 +864,7 @@ export function SmartDrawerResumePrompt({
           animate={{ width: 400 }}
           exit={{ width: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className={cn('h-screen w-100 shrink-0', placeholderClassName)}
+          className={cn('h-screen h-[100dvh] w-100 shrink-0 hidden sm:block', placeholderClassName)}
           data-chalo-drawer-placeholder="true"
         />
       )}
@@ -864,11 +873,11 @@ export function SmartDrawerResumePrompt({
 
   const promptContent = (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: '100%' }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      exit={{ opacity: 0, x: '100%' }}
       className={cn(
-        'fixed top-0 right-0 h-screen w-100 bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000',
+        'fixed top-0 right-0 h-screen h-[100dvh] max-h-[100dvh] w-full sm:w-[400px] max-w-full bg-chalo-surface/95 backdrop-blur-xl border-l border-chalo-border shadow-2xl flex flex-col z-10000 overflow-y-auto pb-[max(1.5rem,calc(1.5rem+env(safe-area-inset-bottom,0px)))] pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))]',
         className
       )}
       data-chalo-drawer="true"

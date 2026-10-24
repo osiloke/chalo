@@ -60,6 +60,13 @@
   --color-chalo-border-subtle: #f1f5f9;
 }
 
+:root {
+  --chalo-safe-area-top: env(safe-area-inset-top, 0px);
+  --chalo-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --chalo-safe-area-left: env(safe-area-inset-left, 0px);
+  --chalo-safe-area-right: env(safe-area-inset-right, 0px);
+}
+
 /* System preference: auto dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -171,4 +178,11 @@
 
   --color-chalo-border: #e2e8f0;
   --color-chalo-border-subtle: #f1f5f9;
+}
+
+:root {
+  --chalo-safe-area-top: env(safe-area-inset-top, 0px);
+  --chalo-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --chalo-safe-area-left: env(safe-area-inset-left, 0px);
+  --chalo-safe-area-right: env(safe-area-inset-right, 0px);
 }

@@ -38,18 +38,18 @@ export const DiagnosticsDemo: FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 backdrop-blur-xl shadow-lg">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 backdrop-blur-xl shadow-lg">
         <div>
           <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Diagnostics & Verification</span>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Edge Case Sandbox</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Edge Case Sandbox</h1>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3">
           <button
             onClick={() => startMission('portal-dialog-demo')}
             disabled={activeMission?.id === 'portal-dialog-demo'}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-purple-600 text-white font-semibold text-sm shadow-md hover:bg-purple-700 active:scale-95 transition-all disabled:opacity-50"
+            className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 px-4 sm:px-5 py-2.5 rounded-2xl bg-purple-600 text-white font-semibold text-sm shadow-md hover:bg-purple-700 active:scale-95 transition-all disabled:opacity-50"
           >
             <Sparkles size={16} />
             <span>Portal Dialog Test</span>
@@ -57,7 +57,7 @@ export const DiagnosticsDemo: FC = () => {
           <button
             onClick={() => startMission('action-engine-demo')}
             disabled={activeMission?.id === 'action-engine-demo'}
-            className="flex items-center space-x-2 px-5 py-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-50"
+            className="flex-1 sm:flex-initial flex items-center justify-center space-x-2 px-4 sm:px-5 py-2.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-50"
           >
             <Activity size={16} />
             <span>Action Engine Demo</span>

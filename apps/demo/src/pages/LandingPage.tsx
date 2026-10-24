@@ -67,17 +67,17 @@ export const LandingPage: FC = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 sm:space-y-12">
       {/* Hero Section */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
+      <div className="text-center max-w-3xl mx-auto space-y-3 sm:space-y-4">
+        <div className="inline-flex items-center space-x-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
           <Sparkles size={14} />
           <span>Interactive Architectural Demo</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
           Intelligent Guided UI Experiences
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300">
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
           Explore how Chalo coordinates declarative missions, automated action sequences, and conversational UI drawers across distinct application scenarios.
         </p>
       </div>

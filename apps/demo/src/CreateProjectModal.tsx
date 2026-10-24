@@ -77,12 +77,12 @@ export function CreateProjectModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-3 sm:p-4"
           >
-            <div className="pointer-events-auto w-full max-w-lg mx-4">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="pointer-events-auto w-full max-w-lg max-h-[90dvh] flex flex-col">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90dvh]">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-500/30">
                       <FileText size={20} />
@@ -101,7 +101,7 @@ export function CreateProjectModal({
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto">
                   {/* Project Name */}
                   <div className={cn(
                     "space-y-1.5",
